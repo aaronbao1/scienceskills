@@ -1,0 +1,18 @@
+- id: name_the_fallacy
+  kind: ground_truth
+  prompt: >
+    Name the informal fallacy in this argument: "No one has proven the claim false, so it
+    must be true." Answer with the standard name of the fallacy.
+  scorer: contains
+  expected: ignorance
+- id: appraise_source
+  kind: judge
+  prompt: >
+    You are handed a memoir written 40 years after the events it describes, by a participant
+    with a stake in how they are remembered. Describe how you appraise its reliability and
+    what corroboration you would seek. Judged on source appraisal per the rubric.
+- id: steelman
+  kind: judge
+  prompt: >
+    Given a thesis you find persuasive, state the strongest counterargument against it and a
+    fair response, and explain why mapping the debate matters more than citing only allies.
