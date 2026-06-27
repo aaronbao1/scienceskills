@@ -1,0 +1,26 @@
+from pathlib import Path
+from eval.harness.tasks import load_tasks
+
+ROOT = Path(__file__).resolve().parents[1]
+SKILL = ROOT / "skills" / "rigorous-validation" / "SKILL.md"
+RUBRIC = ROOT / "eval" / "rubrics" / "rigorous-validation.md"
+TASKS = ROOT / "eval" / "benchmarks" / "rigorous-validation" / "tasks.yaml"
+
+
+def test_skill_declares_composition_contract():
+    body = SKILL.read_text(encoding="utf-8")
+    assert "statistical-analysis" in body
+    assert "verification-before-completion" in body
+    assert "leakage" in body.lower()
+
+
+def test_rubric_has_core_dimensions():
+    text = RUBRIC.read_text(encoding="utf-8").lower()
+    for dim in ("reproducibility", "statistical", "robustness", "leakage"):
+        assert dim in text
+
+
+def test_benchmark_slice_loads_with_ground_truth():
+    tasks = load_tasks(TASKS)
+    assert len(tasks) >= 2
+    assert any(t.kind == "ground_truth" for t in tasks)

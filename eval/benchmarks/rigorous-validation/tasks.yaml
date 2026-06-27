@@ -1,0 +1,20 @@
+- id: bonferroni_validation
+  kind: ground_truth
+  prompt: >
+    An experiment runs 20 independent significance tests and wants a family-wise error
+    rate of 0.05 via a Bonferroni correction. Report the per-test threshold to 4 decimal
+    places.
+  scorer: numeric
+  expected: 0.0025
+  tolerance: 0.0001
+- id: leakage_audit
+  kind: judge
+  prompt: >
+    A model reports 99% accuracy on a medical imaging task. Enumerate, in priority order,
+    the leakage and bias checks you would run before believing it, and what each would
+    catch. Judged on leakage and bias per the rubric.
+- id: single_run_pushback
+  kind: judge
+  prompt: >
+    A colleague reports a 2-point improvement from one training run. Describe the
+    reproducibility, baseline, and robustness checks required before this is a result.
