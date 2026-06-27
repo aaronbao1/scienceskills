@@ -21,9 +21,9 @@
 - Every `SKILL.md` frontmatter MUST have `name` (equal to its directory name) and `description` (non-empty, ≤ 1024 chars).
 - Skills and `CLAUDE.md` MUST NOT contain the literal placeholder tokens `TODO`, `TBD`, or `FIXME`.
 - `CLAUDE.md` MUST stay condensed: ≤ 4000 characters.
-- Harness code is a Python package importable as `eval.harness.<module>`; pytest resolves it via `pythonpath = ["."]`.
+- Harness code is a Python package importable as `eval.harness.<module>`; pytest resolves it via `pythonpath = ["."]`. Run pytest as `python3 -m pytest` (there is no `pytest` on PATH); pyyaml and pytest are already installed for the system `python3` (no venv needed).
 - Sentence case in all prose and labels. DRY, YAGNI, TDD, frequent commits.
-- Python: 3.11+ syntax (`str | None` unions, `dataclass`). Only dependencies: `pyyaml` (runtime), `pytest` (dev).
+- Python 3.9+ (the environment interpreter is 3.9.6). Every harness module MUST start with `from __future__ import annotations` so PEP 604 unions (`str | None`) evaluate lazily and work on 3.9. Only dependencies: `pyyaml` (runtime), `pytest` (dev).
 - Never start implementation on `main`/`master` without explicit user consent; work on a feature branch / worktree.
 
 ---
@@ -72,7 +72,7 @@ def test_marketplace_lists_the_plugin():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pytest tests/test_plugin_manifest.py -v`
+Run: `python3 -m pytest tests/test_plugin_manifest.py -v`
 Expected: FAIL — `FileNotFoundError` / collection error (manifests and `pyproject` absent, `pythonpath` not set).
 
 - [ ] **Step 3: Create the scaffold files**
@@ -83,7 +83,7 @@ Expected: FAIL — `FileNotFoundError` / collection error (manifests and `pyproj
 name = "scienceskills-eval"
 version = "0.1.0"
 description = "Eval harness for the scienceskills plugin"
-requires-python = ">=3.11"
+requires-python = ">=3.9"
 dependencies = ["pyyaml>=6"]
 
 [project.optional-dependencies]
@@ -157,8 +157,8 @@ lives in `eval/`.
 
 ## Lint skills / validate benchmarks
 
-    python -m eval.harness.cli lint
-    python -m eval.harness.cli validate
+    python3 -m eval.harness.cli lint
+    python3 -m eval.harness.cli validate
 ```
 
 Create the empty `__init__.py` files:
@@ -171,7 +171,7 @@ mkdir -p eval/harness tests
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `pytest tests/test_plugin_manifest.py -v`
+Run: `python3 -m pytest tests/test_plugin_manifest.py -v`
 Expected: PASS (2 passed).
 
 - [ ] **Step 5: Commit**
@@ -225,13 +225,15 @@ def test_non_mapping_frontmatter_raises():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pytest tests/test_frontmatter.py -v`
+Run: `python3 -m pytest tests/test_frontmatter.py -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'eval.harness.frontmatter'`.
 
 - [ ] **Step 3: Write minimal implementation**
 
 `eval/harness/frontmatter.py`:
 ```python
+from __future__ import annotations
+
 import yaml
 
 
@@ -257,7 +259,7 @@ def parse_frontmatter(text: str) -> tuple[dict, str]:
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `pytest tests/test_frontmatter.py -v`
+Run: `python3 -m pytest tests/test_frontmatter.py -v`
 Expected: PASS (4 passed).
 
 - [ ] **Step 5: Commit**
@@ -322,13 +324,15 @@ def test_missing_skill_md_flagged(tmp_path):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pytest tests/test_skill_lint.py -v`
+Run: `python3 -m pytest tests/test_skill_lint.py -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'eval.harness.skill_lint'`.
 
 - [ ] **Step 3: Write minimal implementation**
 
 `eval/harness/skill_lint.py`:
 ```python
+from __future__ import annotations
+
 from pathlib import Path
 
 from eval.harness.frontmatter import FrontmatterError, parse_frontmatter
@@ -375,7 +379,7 @@ def lint_skill(skill_dir: str | Path) -> list[str]:
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `pytest tests/test_skill_lint.py -v`
+Run: `python3 -m pytest tests/test_skill_lint.py -v`
 Expected: PASS (5 passed).
 
 - [ ] **Step 5: Commit**
@@ -466,13 +470,15 @@ def test_unknown_kind_raises(tmp_path):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pytest tests/test_tasks_loader.py -v`
+Run: `python3 -m pytest tests/test_tasks_loader.py -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'eval.harness.tasks'`.
 
 - [ ] **Step 3: Write minimal implementation**
 
 `eval/harness/tasks.py`:
 ```python
+from __future__ import annotations
+
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -540,7 +546,7 @@ def load_tasks(path: str | Path) -> list[Task]:
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `pytest tests/test_tasks_loader.py -v`
+Run: `python3 -m pytest tests/test_tasks_loader.py -v`
 Expected: PASS (4 passed).
 
 - [ ] **Step 5: Commit**
@@ -607,13 +613,15 @@ def test_unknown_scorer_raises():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pytest tests/test_score.py -v`
+Run: `python3 -m pytest tests/test_score.py -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'eval.harness.score'`.
 
 - [ ] **Step 3: Write minimal implementation**
 
 `eval/harness/score.py`:
 ```python
+from __future__ import annotations
+
 import re
 from dataclasses import dataclass
 
@@ -652,7 +660,7 @@ def score_output(scorer: str, expected, actual: str, tolerance: float | None = N
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `pytest tests/test_score.py -v`
+Run: `python3 -m pytest tests/test_score.py -v`
 Expected: PASS (8 passed).
 
 - [ ] **Step 5: Commit**
@@ -705,13 +713,15 @@ def test_per_version_summary_present():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pytest tests/test_report.py -v`
+Run: `python3 -m pytest tests/test_report.py -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'eval.harness.report'`.
 
 - [ ] **Step 3: Write minimal implementation**
 
 `eval/harness/report.py`:
 ```python
+from __future__ import annotations
+
 from collections import defaultdict
 
 
@@ -740,7 +750,7 @@ def render_comparison(skill: str, rows: list[dict]) -> str:
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `pytest tests/test_report.py -v`
+Run: `python3 -m pytest tests/test_report.py -v`
 Expected: PASS (2 passed).
 
 - [ ] **Step 5: Commit**
@@ -760,7 +770,7 @@ git commit -m "feat: comparison report renderer"
 
 **Interfaces:**
 - Consumes: `eval.harness.skill_lint.lint_skill`, `eval.harness.tasks.load_tasks`, `BenchmarkError`.
-- Produces: `main(argv: list[str] | None = None) -> int` (process exit code: 0 ok, 1 issues found, 2 usage). Subcommands `lint --skills <dir>` and `validate --benchmarks <dir>`. Runnable as `python -m eval.harness.cli`.
+- Produces: `main(argv: list[str] | None = None) -> int` (process exit code: 0 ok, 1 issues found, 2 usage). Subcommands `lint --skills <dir>` and `validate --benchmarks <dir>`. Runnable as `python3 -m eval.harness.cli`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -810,13 +820,15 @@ def test_validate_fails_on_bad_benchmark(tmp_path):
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pytest tests/test_cli.py -v`
+Run: `python3 -m pytest tests/test_cli.py -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'eval.harness.cli'`.
 
 - [ ] **Step 3: Write minimal implementation**
 
 `eval/harness/cli.py`:
 ```python
+from __future__ import annotations
+
 import argparse
 from pathlib import Path
 
@@ -868,7 +880,7 @@ if __name__ == "__main__":
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `pytest tests/test_cli.py -v`
+Run: `python3 -m pytest tests/test_cli.py -v`
 Expected: PASS (4 passed).
 
 - [ ] **Step 5: Commit**
@@ -918,7 +930,7 @@ def test_scientific_rigor_present_and_routes():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pytest tests/test_skills_valid.py -v`
+Run: `python3 -m pytest tests/test_skills_valid.py -v`
 Expected: FAIL — `test_scientific_rigor_present_and_routes` errors (file missing); parametrized test collects nothing (empty `skills/`).
 
 - [ ] **Step 3: Write the skill files**
@@ -1036,7 +1048,7 @@ Hard reasoning and creativity are one loop, run twice: diverge, then converge.
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `pytest tests/test_skills_valid.py -v`
+Run: `python3 -m pytest tests/test_skills_valid.py -v`
 Expected: PASS (`scientific-rigor` lints clean; router test passes).
 
 - [ ] **Step 5: Commit**
@@ -1080,7 +1092,7 @@ def test_master_prompt_is_condensed_and_routes():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pytest tests/test_master_prompt.py -v`
+Run: `python3 -m pytest tests/test_master_prompt.py -v`
 Expected: FAIL — `FileNotFoundError` (`CLAUDE.md` absent).
 
 - [ ] **Step 3: Write `CLAUDE.md`**
@@ -1123,7 +1135,7 @@ evidence · uncontrolled data leakage.
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `pytest tests/test_master_prompt.py -v`
+Run: `python3 -m pytest tests/test_master_prompt.py -v`
 Expected: PASS (1 passed).
 
 - [ ] **Step 5: Commit**
@@ -1182,7 +1194,7 @@ def test_benchmark_slice_loads_and_has_ground_truth():
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pytest tests/test_faithful_implementation.py -v`
+Run: `python3 -m pytest tests/test_faithful_implementation.py -v`
 Expected: FAIL — `FileNotFoundError` (skill, rubric, and tasks absent).
 
 - [ ] **Step 3: Write the skill, rubric, and benchmark files**
@@ -1313,7 +1325,7 @@ Properties (oracles):
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `pytest tests/test_faithful_implementation.py tests/test_skills_valid.py -v`
+Run: `python3 -m pytest tests/test_faithful_implementation.py tests/test_skills_valid.py -v`
 Expected: PASS (contract, rubric, and benchmark tests pass; `faithful-implementation` now also lints clean under the parametrized skill test).
 
 - [ ] **Step 5: Commit**
@@ -1337,15 +1349,15 @@ git commit -m "feat: faithful-implementation skill + benchmark slice + rubric"
 
 - [ ] **Step 1: Run the whole test suite**
 
-Run: `pytest -v`
+Run: `python3 -m pytest -v`
 Expected: PASS — all tests from Tasks 1–10 green, no warnings.
 
 - [ ] **Step 2: Run the harness against the real repo**
 
-Run: `python -m eval.harness.cli lint`
+Run: `python3 -m eval.harness.cli lint`
 Expected: prints `lint: OK`, exit 0.
 
-Run: `python -m eval.harness.cli validate`
+Run: `python3 -m eval.harness.cli validate`
 Expected: prints `validate: OK`, exit 0.
 
 - [ ] **Step 3: Confirm condensed master prompt and clean tree**
