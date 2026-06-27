@@ -1,0 +1,19 @@
+- id: gate_arithmetic
+  kind: ground_truth
+  prompt: >
+    Incumbent overall score is 0.80, candidate is 0.805, the promotion margin is 0.02, and
+    no task regressed. Should the candidate be promoted? Answer with one lowercase word:
+    yes or no.
+  scorer: contains
+  expected: "no"
+- id: design_fair_eval
+  kind: judge
+  prompt: >
+    Describe how you would evaluate a candidate version of the literature-review skill so
+    the comparison is fair and hard to game: what to anchor on, how many judges, and what
+    would block promotion. Judged on evaluation rigor and gating soundness per the rubric.
+- id: reject_reward_hacking
+  kind: judge
+  prompt: >
+    A candidate skill scores higher only because the benchmark task was edited to match its
+    output. Explain why this must be rejected and how the loop should prevent it.
