@@ -1,0 +1,18 @@
+- id: rank_methods
+  kind: judge
+  prompt: >
+    Given three optimizers (SGD with momentum, Adam, and a recent variant) for training a
+    mid-size transformer under a fixed compute budget, produce a ranked comparison against
+    explicit criteria and recommend one for this context, with reasons. Judged on method
+    comparison per the rubric.
+- id: extract_oracles
+  kind: judge
+  prompt: >
+    From a paper that defines an algorithm by an update equation and reports a benchmark
+    accuracy of 92.3%, list the test oracles an implementer should assert to confirm
+    fidelity: the equation's behavior, the reported number with a tolerance, and one invariant.
+- id: appraisal_over_summary
+  kind: judge
+  prompt: >
+    You find two papers reaching opposite conclusions on the same question. Describe how
+    you appraise and reconcile them rather than averaging or simply picking the newer one.
