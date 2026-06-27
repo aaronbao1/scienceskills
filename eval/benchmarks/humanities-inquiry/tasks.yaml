@@ -1,0 +1,19 @@
+- id: ground_interpretation
+  kind: judge
+  prompt: >
+    Offer an interpretation of a recurring image in a novel of your choice, anchoring each
+    claim to specific passages, naming the interpretive method and theoretical lens, and
+    engaging the strongest rival reading. Judged on interpretive validity and methodological
+    fit per the rubric.
+- id: positionality
+  kind: judge
+  prompt: >
+    You are analyzing oral histories from a community you do not belong to. State the
+    positionality and ethics considerations that must shape the interpretation and the
+    write-up.
+- id: method_fit
+  kind: judge
+  prompt: >
+    A researcher wants to study how a concept's meaning shifted across a century of
+    pamphlets. Recommend an interpretive method, with reasons, and one rival method you
+    would reject and why.
