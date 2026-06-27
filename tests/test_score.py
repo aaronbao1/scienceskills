@@ -35,3 +35,15 @@ def test_regex():
 def test_unknown_scorer_raises():
     with pytest.raises(ValueError):
         score_output("bogus", 1, "1")
+
+
+def test_failing_result_scores_zero():
+    assert score_output("exact", "a", "b").score == 0.0
+
+
+def test_numeric_default_tolerance_exact():
+    assert score_output("numeric", 2.0, "2.0").passed
+
+
+def test_numeric_default_tolerance_rejects_near_miss():
+    assert not score_output("numeric", 2.0, "2.0001").passed

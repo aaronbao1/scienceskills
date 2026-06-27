@@ -34,16 +34,19 @@ def load_tasks(path: str | Path) -> list[Task]:
         if not isinstance(item, dict):
             raise BenchmarkError(f"{path}[{i}]: each task must be a mapping")
         tid = item.get("id")
-        if not tid:
-            raise BenchmarkError(f"{path}[{i}]: missing 'id'")
+        if not isinstance(tid, str) or not tid:
+            raise BenchmarkError(f"{path}[{i}]: 'id' must be a non-empty string")
         if tid in seen:
             raise BenchmarkError(f"{path}: duplicate id '{tid}'")
         seen.add(tid)
+        if "kind" not in item:
+            raise BenchmarkError(f"{path}[{tid}]: missing 'kind'")
         kind = item.get("kind")
         if kind not in VALID_KINDS:
             raise BenchmarkError(f"{path}[{tid}]: kind must be one of {sorted(VALID_KINDS)}")
-        if not item.get("prompt"):
-            raise BenchmarkError(f"{path}[{tid}]: missing 'prompt'")
+        prompt = item.get("prompt")
+        if not isinstance(prompt, str) or not prompt:
+            raise BenchmarkError(f"{path}[{tid}]: 'prompt' must be a non-empty string")
         scorer = item.get("scorer")
         if kind == "ground_truth":
             if scorer not in VALID_SCORERS:

@@ -33,3 +33,18 @@ def test_missing_skill_md_flagged(tmp_path):
     d = tmp_path / "empty"
     d.mkdir()
     assert any("SKILL.md" in i for i in lint_skill(d))
+
+
+def test_description_too_long_flagged(tmp_path):
+    d = _make_skill(tmp_path, "good", f"name: good\ndescription: {'x' * 1025}", "# Good\n\nBody.")
+    assert any("description" in i for i in lint_skill(d))
+
+
+def test_empty_body_flagged(tmp_path):
+    d = _make_skill(tmp_path, "good", "name: good\ndescription: Use when testing.", "")
+    assert any("empty" in i for i in lint_skill(d))
+
+
+def test_body_missing_heading_flagged(tmp_path):
+    d = _make_skill(tmp_path, "good", "name: good\ndescription: Use when testing.", "No heading here.")
+    assert any("heading" in i.lower() for i in lint_skill(d))

@@ -26,7 +26,7 @@ def score_output(scorer: str, expected, actual: str, tolerance: float | None = N
         ok = re.search(str(expected), str(actual)) is not None
         return _binary(ok, "regex matched", f"/{expected}/ did not match")
     if scorer == "numeric":
-        tol = tolerance or 0.0
+        tol = 0.0 if tolerance is None else tolerance
         try:
             a, e = float(actual), float(expected)
         except (TypeError, ValueError):
