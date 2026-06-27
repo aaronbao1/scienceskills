@@ -1,0 +1,13 @@
+[project]
+name = "scienceskills-eval"
+version = "0.1.0"
+description = "Eval harness for the scienceskills plugin"
+requires-python = ">=3.9"
+dependencies = ["pyyaml>=6"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

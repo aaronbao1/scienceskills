@@ -1,0 +1,11 @@
+{
+  "name": "scienceskills",
+  "description": "A self-improving suite of skills for rigorous scientific research: design, literature review, faithful implementation, validation, synthesis, humanities inquiry, and a skill-improvement engine.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Aaron Bao",
+    "email": "aaron.bao64@gmail.com"
+  },
+  "license": "MIT",
+  "keywords": ["science", "research", "rigor", "reproducibility", "skills"]
+}

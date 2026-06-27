@@ -1,0 +1,17 @@
+{
+  "name": "scienceskills-dev",
+  "description": "Development marketplace for the scienceskills research skill suite",
+  "owner": {
+    "name": "Aaron Bao",
+    "email": "aaron.bao64@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "scienceskills",
+      "description": "A self-improving suite of skills for rigorous scientific research.",
+      "version": "0.1.0",
+      "source": "./",
+      "author": { "name": "Aaron Bao", "email": "aaron.bao64@gmail.com" }
+    }
+  ]
+}
