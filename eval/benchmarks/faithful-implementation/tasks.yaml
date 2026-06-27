@@ -1,0 +1,21 @@
+- id: logsumexp_value
+  kind: ground_truth
+  prompt: >
+    Using fixtures/logsumexp.md, implement a numerically stable log-sum-exp and
+    report logsumexp([0, 0]) to at least 6 decimal places.
+  scorer: numeric
+  expected: 0.6931471805599453
+  tolerance: 0.000001
+- id: logsumexp_stability
+  kind: ground_truth
+  prompt: >
+    Report logsumexp([1000, 1000]) using a stable implementation; it must be finite.
+  scorer: numeric
+  expected: 1000.6931471805599
+  tolerance: 0.001
+- id: oracle_design_quality
+  kind: judge
+  prompt: >
+    Given fixtures/logsumexp.md, enumerate the test oracles you would write BEFORE
+    coding (values, shift invariance, stability) and justify each tolerance from the
+    source. Judged on faithfulness and rigor per the rubric.
