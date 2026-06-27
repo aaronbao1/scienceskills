@@ -1,0 +1,25 @@
+from pathlib import Path
+from eval.harness.tasks import load_tasks
+
+ROOT = Path(__file__).resolve().parents[1]
+SKILL = ROOT / "skills" / "research-design" / "SKILL.md"
+RUBRIC = ROOT / "eval" / "rubrics" / "research-design.md"
+TASKS = ROOT / "eval" / "benchmarks" / "research-design" / "tasks.yaml"
+
+
+def test_skill_declares_composition_contract():
+    body = SKILL.read_text(encoding="utf-8")
+    assert "writing-plans" in body
+    assert "research spec" in body.lower()
+
+
+def test_rubric_has_core_dimensions():
+    text = RUBRIC.read_text(encoding="utf-8").lower()
+    for dim in ("falsifiability", "metric", "honesty"):
+        assert dim in text
+
+
+def test_benchmark_slice_loads_with_ground_truth():
+    tasks = load_tasks(TASKS)
+    assert len(tasks) >= 2
+    assert any(t.kind == "ground_truth" for t in tasks)

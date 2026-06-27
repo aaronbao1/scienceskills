@@ -1,0 +1,22 @@
+- id: hypothesis_falsifiability
+  kind: judge
+  prompt: >
+    A team claims "our model understands physics." Turn this into a falsifiable research
+    design: a sharp question, a hypothesis with a concrete prediction that could fail, a
+    primary metric fixed in advance, and one ablation. Judged on falsifiability and metric
+    validity per the rubric.
+- id: choose_primary_metric
+  kind: judge
+  prompt: >
+    Given a study comparing three recommendation algorithms on click-through, dwell time,
+    and revenue, specify which single primary metric you would pre-register and why, and
+    how you would control multiple comparisons across the secondary metrics.
+- id: bonferroni_threshold
+  kind: ground_truth
+  prompt: >
+    A design pre-registers 5 independent primary comparisons at a family-wise alpha of
+    0.05 using a Bonferroni correction. Report the per-comparison significance threshold
+    to 4 decimal places.
+  scorer: numeric
+  expected: 0.01
+  tolerance: 0.0001
