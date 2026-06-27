@@ -1,0 +1,17 @@
+- id: calibrate_claims
+  kind: judge
+  prompt: >
+    Validation shows a 1.5% improvement (95% CI [0.2%, 2.8%]) on one benchmark, one seed
+    family, with no transfer tested. Write the results paragraph with claims calibrated to
+    this evidence and explicit limitations. Judged on faithfulness and calibration per the rubric.
+- id: honest_figure
+  kind: judge
+  prompt: >
+    Describe how you would visualize a comparison where method A scores 88.1 and method B
+    88.4 so the figure does not exaggerate the 0.3-point gap, and what a misleading version
+    would do instead.
+- id: limitations_section
+  kind: judge
+  prompt: >
+    Given a result that holds only at batch size 32 and was not tested out of distribution,
+    write the limitations the synthesis must state.
