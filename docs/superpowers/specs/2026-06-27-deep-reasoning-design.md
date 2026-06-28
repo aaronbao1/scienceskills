@@ -181,3 +181,24 @@ tests/test_deep_reasoning_ultra.py
 2. `deep-reasoning` skill + rubric + slice + test.
 3. `deep-reasoning-ultra` skill + rubric + slice + test (references `eval.harness.consensus`).
 4. Full-suite green + validate + consensus dry-run.
+
+## 11. Evidence basis (from the deep-research pass)
+
+A deep-research pass (27 primary sources, 129 claims extracted, 25 adversarially verified,
+24 confirmed / 1 refuted) confirmed the technique landscape and the tiered design:
+- **Compute-optimal scaling** — matching test-time compute to difficulty beats uniform max
+  ("Scaling LLM Test-Time Compute Optimally", arXiv:2408.03314; OpenAI o1). → Tier-0 triage
+  + escalation, not always-max.
+- **Step-level (process) verification** beats outcome-only checking ("Let's Verify Step by
+  Step", arXiv:2305.20050). → Tier 3 checks each step.
+- **Self-correction is unreliable** without an external signal ("LLMs Cannot Self-Correct
+  Reasoning Yet", arXiv:2310.01798; "When Can LLMs Actually Correct Their Own Mistakes",
+  TACL 2024). → Tier 3 uses **independent** verifiers, not same-chain self-critique.
+- **Best-of-N with verifiers / aggregation** ("Free Process Rewards…", arXiv:2408.15240;
+  OVM/PRM-guided search, arXiv:2502.00271). → Tier 2 + the `-ultra` consensus core.
+- **Search over reasoning** and **debate / self-refine** (composable-models LLM debate;
+  Self-Refine, arXiv:2303.17651) — useful but cost- and adjudication-sensitive. → Tier 4,
+  chosen by fit.
+- **Refuted by the verification pass:** the claim that verifier-guided beam search reliably
+  underperforms repeated sampling at large sample sizes (arXiv:2502.00271) was killed
+  (2/3 refute) — contested, so the design treats verification as a tier, not a universal win.
