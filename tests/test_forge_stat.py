@@ -82,3 +82,16 @@ def test_main_exit_codes(tmp_path):
     reject = tmp_path / "r.json"
     reject.write_text(json.dumps(_results([0.7] * 5, [0.8] * 5)), encoding="utf-8")
     assert main([str(reject)]) == 1
+
+
+def test_main_exit_2_on_malformed_runs(tmp_path):
+    import json
+    bad = tmp_path / "bad.json"
+    # runs is not a list -> would raise TypeError inside evaluate
+    bad.write_text(json.dumps({
+        "skill": "demo",
+        "incumbent": {"hash": "i", "runs": 5},
+        "candidate": {"hash": "c", "runs": 5},
+        "tournament": [],
+    }), encoding="utf-8")
+    assert main([str(bad)]) == 2
