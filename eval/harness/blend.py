@@ -13,7 +13,11 @@ def parse_rubric_weights(rubric_text: str) -> dict[str, float]:
     """Extract {dimension (lowercased): weight} from a rubric's markdown."""
     weights: dict[str, float] = {}
     for match in _DIM_RE.finditer(rubric_text):
-        weights[match.group(1).strip().lower()] = float(match.group(2))
+        name = match.group(1).strip().lower()
+        try:
+            weights[name] = float(match.group(2))
+        except ValueError as exc:
+            raise RubricError(f"invalid weight for '{name}': {match.group(2)!r}") from exc
     if not weights:
         raise RubricError("no weighted dimensions found")
     total = sum(weights.values())

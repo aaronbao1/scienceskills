@@ -52,3 +52,9 @@ def test_overall_score():
 def test_overall_score_empty_raises():
     with pytest.raises(ValueError):
         overall_score([])
+
+
+def test_parse_rubric_weights_rejects_malformed_weight():
+    bad = "- **A (weight 0.1.2):** x\n- **B (weight 0.8):** y\n"
+    with pytest.raises(RubricError):
+        parse_rubric_weights(bad)
