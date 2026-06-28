@@ -164,7 +164,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     try:
         decision, report = evaluate(results)
-    except (KeyError, ValueError, TypeError) as exc:
+    except (KeyError, ValueError, TypeError, AttributeError) as exc:
         print(f"error: malformed results: {exc}", file=sys.stderr)
         return 2
     print(report)

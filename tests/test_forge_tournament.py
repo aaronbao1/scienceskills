@@ -47,3 +47,16 @@ def test_robust_flags_verbosity_and_injection():
     assert out["injection_flags"] == ["t1"]      # candidate_text trips detector
     assert out["panel_independent"] is False     # only 2 distinct families
     assert out["mean_disagreement"] > 0.0        # one judge dissented
+
+
+def test_main_exit_2_on_malformed_panel(tmp_path):
+    import json
+    from eval.harness.forge import main
+    bad = tmp_path / "bad.json"
+    bad.write_text(json.dumps({
+        "skill": "demo", "alpha": 0.05, "n_candidates": 1, "seed": 0,
+        "incumbent": {"hash": "i", "runs": [{"task_id": "g1", "split": "gate", "seed": 0, "score": 0.7}]},
+        "candidate": {"hash": "c", "runs": [{"task_id": "g1", "split": "gate", "seed": 0, "score": 0.8}]},
+        "tournament": {"panel": None, "comparisons": []},
+    }), encoding="utf-8")
+    assert main([str(bad)]) == 2
