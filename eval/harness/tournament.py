@@ -58,3 +58,35 @@ def panel_disagreement(verdicts: list[str]) -> float:
         raise TournamentError("empty panel")
     decision = aggregate_panel(verdicts)
     return 1.0 - verdicts.count(decision) / len(verdicts)
+
+
+def check_panel_independence(
+    judge_families: list[str],
+    agent_family,
+    min_judges: int = 3,
+    min_families: int = 3,
+) -> dict:
+    """Validate a judge panel: enough judges, enough distinct families, none sharing the agent's."""
+    families = list(judge_families)
+    reasons: list[str] = []
+    if len(families) < min_judges:
+        reasons.append(f"only {len(families)} judges (need >= {min_judges})")
+    if len(set(families)) < min_families:
+        reasons.append(f"only {len(set(families))} distinct families (need >= {min_families})")
+    if agent_family in families:
+        reasons.append(f"a judge shares the agent family: {agent_family}")
+    return {"independent": not reasons, "reasons": reasons}
+
+
+def verbosity_flag(
+    winner: str,
+    incumbent_chars: int,
+    candidate_chars: int,
+    ratio: float = 1.25,
+) -> bool:
+    """True when the winning side's output is >= ratio times the loser's length (possible length bias)."""
+    if winner == "candidate":
+        return candidate_chars >= ratio * max(incumbent_chars, 1)
+    if winner == "incumbent":
+        return incumbent_chars >= ratio * max(candidate_chars, 1)
+    return False
