@@ -5,3 +5,4 @@ __pycache__/
 eval/reports/
 *.egg-info/
 dist/
+.DS_Store
