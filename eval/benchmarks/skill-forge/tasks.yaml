@@ -30,3 +30,12 @@
   prompt: >
     A candidate skill scores higher only because the benchmark task was edited to match its
     output. Explain why this must be rejected and how the loop should prevent it.
+- id: order_swap_consistency
+  kind: ground_truth
+  split: gate
+  prompt: >
+    In the A/B tournament a judge says the candidate wins when the candidate is shown first but
+    the incumbent wins when the incumbent is shown first. Under order-swapped scoring, does this
+    count as a candidate win? Answer with one lowercase word: yes or no.
+  scorer: exact
+  expected: "no"

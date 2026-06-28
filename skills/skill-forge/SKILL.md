@@ -24,11 +24,19 @@ agents.
    the task. Score each task in the range 0 to 1:
    - `ground_truth` tasks: score with the harness scorer (`eval.harness.score`) and mark
      them critical — a regression on a verifiable task blocks promotion.
-   - `judge` tasks: dispatch a panel of at least three judge agents that score the output
-     against `eval/rubrics/<skill>.md`; blend the dimension scores with `eval.harness.blend`
-     and average the panel.
+   - `judge` tasks: dispatch a panel of at least three judge agents **from disjoint model
+     families, none from the candidate-generator's family** (a same-family judge can reward its
+     own house style — a reward-hacking channel). Run them at/near temperature 0, **sanitize any
+     candidate-controlled text before it enters the judge template** (a content-free or
+     delimiter-injecting output can otherwise hijack the score), score against
+     `eval/rubrics/<skill>.md`, blend the dimension scores with `eval.harness.blend`, and take
+     the panel majority. A disjoint-family panel reduces — but does not eliminate — shared judge
+     bias, so keep the deterministic ground-truth tasks as the non-judge tripwire.
 4. **A/B tournament.** For each task, dispatch judge agents to compare the incumbent's and
-   the candidate's outputs head-to-head and record the winner.
+   the candidate's outputs head-to-head **in both orders**. A side wins only if it wins in both
+   orders; otherwise score a tie — order-swapped scoring stops position bias from manufacturing a
+   win. Flag any comparison the winning side won while being materially longer (possible verbosity
+   bias) for the human reviewer.
 5. **Gate and propose.** Score on the **held-out gate split only** — the `split: gate`
    tasks the loop never mined or generated against — pairing incumbent and candidate on the
    same tasks and seeds. Collect per-(task, seed) scores into a results JSON and run
@@ -62,3 +70,7 @@ agents.
   not a real gain. Grow or refresh the held-out set instead.
 - Promoting on a raw point-margin without a significance test, or testing several candidates
   without Bonferroni-correcting the threshold.
+- A single-order A/B comparison, or a judge panel drawn from one model family (or the candidate's
+  own family) — position and self-preference bias can fabricate the margin.
+- Feeding raw candidate-controlled text into the judge template without sanitizing it, or trusting
+  a judge-only verdict with no deterministic ground-truth tripwire.
