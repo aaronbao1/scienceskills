@@ -58,7 +58,7 @@ def load_tasks(path: str | Path) -> list[Task]:
         tasks.append(
             Task(
                 id=tid,
-                prompt=item["prompt"],
+                prompt=prompt,
                 kind=kind,
                 scorer=scorer,
                 expected=item.get("expected"),

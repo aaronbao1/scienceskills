@@ -89,3 +89,9 @@ def test_non_string_id_message_mentions_string(tmp_path):
     p = _write(tmp_path, "- id: 0\n  kind: judge\n  prompt: a\n")
     with pytest.raises(BenchmarkError, match="non-empty string"):
         load_tasks(p)
+
+
+def test_non_string_prompt_raises(tmp_path):
+    p = _write(tmp_path, "- id: t1\n  kind: judge\n  prompt: 0\n")
+    with pytest.raises(BenchmarkError, match="non-empty string"):
+        load_tasks(p)
