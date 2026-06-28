@@ -67,3 +67,20 @@ def test_load_results_roundtrip(tmp_path):
     payload = {"skill": "x", "margin": 0.02, "incumbent": {"hash": "i", "task_scores": []}, "candidate": {"hash": "c", "task_scores": []}, "tournament": []}
     p.write_text(json.dumps(payload), encoding="utf-8")
     assert load_results(p) == payload
+
+
+def test_main_empty_task_scores_returns_2(tmp_path):
+    import json
+    p = tmp_path / "e.json"
+    p.write_text(
+        json.dumps(
+            {
+                "skill": "x",
+                "incumbent": {"task_scores": []},
+                "candidate": {"task_scores": []},
+                "tournament": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+    assert main([str(p)]) == 2

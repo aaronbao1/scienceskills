@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -78,7 +79,14 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="eval.harness.consensus")
     parser.add_argument("results", help="path to a reasoning results JSON file")
     args = parser.parse_args(argv)
-    data = json.loads(Path(args.results).read_text(encoding="utf-8"))
+    try:
+        data = json.loads(Path(args.results).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        print(f"error: cannot read results file: {exc}", file=sys.stderr)
+        return 2
+    if not data.get("answers"):
+        print("error: results JSON must contain a non-empty 'answers' list", file=sys.stderr)
+        return 2
     agg = aggregate(
         data["answers"],
         data.get("verifier_verdicts"),

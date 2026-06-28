@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import sys
 from pathlib import Path
 
 from eval.harness.blend import overall_score
@@ -54,7 +55,16 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="eval.harness.forge")
     parser.add_argument("results", help="path to a forge results JSON file")
     args = parser.parse_args(argv)
-    decision, report = evaluate(load_results(args.results))
+    try:
+        results = load_results(args.results)
+    except (OSError, json.JSONDecodeError) as exc:
+        print(f"error: cannot read results file: {exc}", file=sys.stderr)
+        return 2
+    try:
+        decision, report = evaluate(results)
+    except (KeyError, ValueError) as exc:
+        print(f"error: malformed results: {exc}", file=sys.stderr)
+        return 2
     print(report)
     return 0 if decision.promote else 1
 

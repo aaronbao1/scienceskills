@@ -56,3 +56,15 @@ def test_main_exit_codes(tmp_path):
     diverged = tmp_path / "d.json"
     diverged.write_text(json.dumps({"answers": ["x", "y", "z"]}), encoding="utf-8")
     assert main([str(diverged)]) == 1
+
+
+def test_main_missing_answers_returns_2(tmp_path):
+    p = tmp_path / "bad.json"
+    p.write_text(json.dumps({"verifier_verdicts": [True]}), encoding="utf-8")
+    assert main([str(p)]) == 2
+
+
+def test_main_malformed_json_returns_2(tmp_path):
+    p = tmp_path / "bad.json"
+    p.write_text("{not json", encoding="utf-8")
+    assert main([str(p)]) == 2
