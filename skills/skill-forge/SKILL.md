@@ -29,17 +29,21 @@ agents.
      and average the panel.
 4. **A/B tournament.** For each task, dispatch judge agents to compare the incumbent's and
    the candidate's outputs head-to-head and record the winner.
-5. **Gate and propose.** Collect the scores and verdicts into a results JSON and run
-   `python3 -m eval.harness.forge results.json`. It blends scores, applies the promotion gate
-   (a margin of improvement and no critical regression), and renders a promotion proposal.
-   Present the proposal and the evidence to your human partner. Promote only on approval —
-   then replace the SKILL.md and `git tag` the new version so the prior one is always one
-   `git checkout` away.
+5. **Gate and propose.** Score on the **held-out gate split only** — the `split: gate`
+   tasks the loop never mined or generated against — pairing incumbent and candidate on the
+   same tasks and seeds. Collect per-(task, seed) scores into a results JSON and run
+   `python3 -m eval.harness.forge results.json`. It builds the paired held-out deltas and
+   promotes only on **statistical significance** (bootstrap CI lower bound above zero and a
+   paired permutation p below the Bonferroni-corrected alpha for the number of candidates),
+   with no critical-task regression. Present the proposal and the evidence to your human
+   partner. Promote only on approval — then replace the SKILL.md and `git tag` the new
+   version so the prior one is always one `git checkout` away.
 
 ## Results JSON shape
 
-`{"skill", "margin", "incumbent": {"hash", "task_scores": [{"task_id", "score", "critical"}]},
-"candidate": {...}, "tournament": [{"task_id", "winner": "candidate|incumbent|tie"}]}`
+`{"skill", "alpha", "n_candidates", "seed", "incumbent": {"hash", "runs": [{"task_id",
+"split", "seed", "score", "critical"}]}, "candidate": {...}, "tournament": [{"task_id",
+"winner": "candidate|incumbent|tie"}]}`
 
 ## Composes with
 
@@ -54,3 +58,7 @@ agents.
 - Editing the benchmark or rubric to make a candidate pass (reward hacking). Improve the
   skill, not the test.
 - No rollback path — every promotion must leave the prior version recoverable in git.
+- Gating on the dev split, or on a benchmark too small to have power — a sub-noise margin is
+  not a real gain. Grow or refresh the held-out set instead.
+- Promoting on a raw point-margin without a significance test, or testing several candidates
+  without Bonferroni-correcting the threshold.
