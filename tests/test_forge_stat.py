@@ -1,4 +1,5 @@
 import json
+import pytest
 from eval.harness.forge import build_paired_deltas, aggregate_per_task, evaluate, main
 from eval.harness.gate import PromotionDecision
 
@@ -11,7 +12,7 @@ def test_build_paired_deltas_gate_only_matched_by_task_and_seed():
     inc = [_run("g1", 0.7, 0), _run("g1", 0.7, 1), _run("d1", 0.5, 0, split="dev")]
     cand = [_run("g1", 0.8, 0), _run("g1", 0.9, 1), _run("d1", 0.9, 0, split="dev")]
     deltas = build_paired_deltas(inc, cand)
-    assert sorted(deltas) == [0.1, 0.2]  # dev pair excluded
+    assert sorted(deltas) == pytest.approx([0.1, 0.2])  # dev pair excluded
 
 
 def test_aggregate_per_task_seed_means():

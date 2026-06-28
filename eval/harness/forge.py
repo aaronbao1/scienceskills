@@ -33,7 +33,7 @@ def build_paired_deltas(inc_runs: list, cand_runs: list, split: str = "gate") ->
     inc = index(inc_runs)
     cand = index(cand_runs)
     keys = sorted(set(inc) & set(cand))
-    return [round(cand[k] - inc[k], 10) for k in keys]
+    return [cand[k] - inc[k] for k in keys]
 
 
 def aggregate_per_task(inc_runs: list, cand_runs: list, split: str = "gate") -> list:
