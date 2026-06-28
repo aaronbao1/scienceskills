@@ -7,6 +7,7 @@ import yaml
 
 VALID_SCORERS: set[str] = {"exact", "numeric", "contains", "regex"}
 VALID_KINDS: set[str] = {"ground_truth", "judge"}
+VALID_SPLITS: set[str] = {"dev", "gate"}
 
 
 class BenchmarkError(ValueError):
@@ -21,6 +22,7 @@ class Task:
     scorer: str | None = None
     expected: object = None
     tolerance: float | None = None
+    split: str = "gate"
 
 
 def load_tasks(path: str | Path) -> list[Task]:
@@ -47,6 +49,9 @@ def load_tasks(path: str | Path) -> list[Task]:
         prompt = item.get("prompt")
         if not isinstance(prompt, str) or not prompt:
             raise BenchmarkError(f"{path}[{tid}]: 'prompt' must be a non-empty string")
+        split = item.get("split", "gate")
+        if split not in VALID_SPLITS:
+            raise BenchmarkError(f"{path}[{tid}]: split must be one of {sorted(VALID_SPLITS)}")
         scorer = item.get("scorer")
         if kind == "ground_truth":
             if scorer not in VALID_SCORERS:
@@ -63,6 +68,14 @@ def load_tasks(path: str | Path) -> list[Task]:
                 scorer=scorer,
                 expected=item.get("expected"),
                 tolerance=item.get("tolerance"),
+                split=split,
             )
         )
     return tasks
+
+
+def split_tasks(tasks: list[Task]) -> tuple[list[Task], list[Task]]:
+    """Partition tasks into (dev, gate) by their split field."""
+    dev = [t for t in tasks if t.split == "dev"]
+    gate = [t for t in tasks if t.split == "gate"]
+    return dev, gate
