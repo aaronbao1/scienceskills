@@ -24,6 +24,6 @@ def decide_promotion(
     if regressions:
         return PromotionDecision(False, f"critical regression on: {', '.join(regressions)}")
     delta = candidate_overall - incumbent_overall
-    if delta < margin:
+    if delta < margin - 1e-9:
         return PromotionDecision(False, f"insufficient gain: +{delta:.3f} < margin {margin}")
     return PromotionDecision(True, f"promote: +{delta:.3f} over incumbent, no critical regression")

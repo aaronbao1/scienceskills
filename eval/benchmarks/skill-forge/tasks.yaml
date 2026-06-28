@@ -4,7 +4,7 @@
     Incumbent overall score is 0.80, candidate is 0.805, the promotion margin is 0.02, and
     no task regressed. Should the candidate be promoted? Answer with one lowercase word:
     yes or no.
-  scorer: contains
+  scorer: exact
   expected: "no"
 - id: design_fair_eval
   kind: judge

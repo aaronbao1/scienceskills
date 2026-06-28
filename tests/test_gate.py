@@ -27,3 +27,9 @@ def test_rejects_critical_regression_even_with_gain():
 def test_boundary_exactly_margin_promotes():
     d = decide_promotion(0.50, 0.52, [_task("t1", 0.5, 0.52)], margin=0.02)
     assert d.promote
+
+
+def test_nominal_margin_gain_promotes_despite_float_error():
+    # 0.82 - 0.80 == 0.019999999999999907 in IEEE-754; a nominal 0.02 gain must promote
+    d = decide_promotion(0.80, 0.82, [_task("t1", 0.80, 0.82)], margin=0.02)
+    assert d.promote
