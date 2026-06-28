@@ -25,7 +25,7 @@ def sanitize_for_judge_template(text: str) -> str:
     """Neutralize delimiter/role markers so candidate text cannot hijack the judge prompt."""
     if not isinstance(text, str):
         return ""
-    out = text.replace("```", "ʼʼʼ")  # defuse code fences
+    out = text.replace("```", "'''")  # defuse code fences
     # escape the colon after a role word so 'System:' no longer parses as a role line
     out = re.sub(r"(?i)\b(system|assistant|user)\s*:", r"\1&#58;", out)
     # turn role/instruction tags into inert parentheticals
