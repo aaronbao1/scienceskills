@@ -1,0 +1,19 @@
+- id: tier_selection
+  kind: judge
+  prompt: >
+    For each of these, state which reasoning tier you would start at and why: (a) "what is 12
+    percent of 250?"; (b) "design a cache-eviction policy for a read-heavy workload with
+    occasional bursts"; (c) "is this informal proof of the irrationality of sqrt(2) correct?"
+    Judged on efficiency and decomposition per the rubric.
+- id: independent_verification
+  kind: judge
+  prompt: >
+    You have a candidate answer to a hard combinatorics problem produced by one reasoning
+    chain. Describe how you would verify it so the check does not inherit the chain's blind
+    spots, and why self-critique by the same chain is insufficient.
+- id: percent_check
+  kind: ground_truth
+  prompt: >
+    Reason carefully and report 12 percent of 250 as a single number.
+  scorer: contains
+  expected: "30"
