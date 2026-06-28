@@ -24,7 +24,7 @@ agents.
    document or target an ambiguous line). Produce two or three such candidates in isolated
    worktrees via `using-git-worktrees`, and carry them on an instance-wise Pareto frontier
    (`eval.harness.pareto`) rather than always keeping the best-on-aggregate — aggregate-best
-   selection local-optimas after one round.
+   selection collapses to a local optimum after one round.
 3. **Run on the benchmark slice.** For the skill's `eval/benchmarks/<skill>/tasks.yaml`,
    dispatch one agent per (version, task) that adopts that version's SKILL.md and performs
    the task. Score each task in the range 0 to 1:
