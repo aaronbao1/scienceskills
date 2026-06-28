@@ -1,0 +1,19 @@
+- id: use_consensus_signal
+  kind: judge
+  prompt: >
+    Five independent paths produced answers [A, A, B, A, C] and three verifiers on the leading
+    answer A returned [pass, fail, pass]. Walk through what eval.harness.consensus reports
+    (agreement, verifier pass rate, confidence, converged, escalate) and what you do next.
+    Judged on aggregation soundness per the rubric.
+- id: escalate_decision
+  kind: ground_truth
+  prompt: >
+    The agreement rate is 0.4 and there are no verifier verdicts, with a confidence threshold of
+    0.7. Does the consensus core signal escalate? Answer with one lowercase word: yes or no.
+  scorer: exact
+  expected: "yes"
+- id: not_one_path
+  kind: judge
+  prompt: >
+    Explain why running a single long reasoning chain and reporting its answer is NOT the same
+    as the consensus this skill requires, and what minimum you need for a meaningful aggregate.
