@@ -39,4 +39,83 @@ skill, each a `SKILL.md` with a `name` and a `description`. You don't memorize t
 
 Always-on underneath all of it: `scientific-rigor` (standards + routing).
 
-<!-- §map end -->
+## Skills
+
+Each entry is **what it does · when to reach for it · what it composes with**. The blurbs
+track each skill's own `description` in its `SKILL.md`.
+
+### Backbone & reasoning
+
+**[`scientific-rigor`](skills/scientific-rigor/SKILL.md)** — the always-on backbone for any
+research, analysis, or research-codebase task. Holds the rigor/honesty/creativity standards
+and routes to the right phase skill. *Reach for it:* by default, on every research task.
+*Composes with:* every other skill (it routes to them); carries the deep-dive references
+`reasoning-and-creativity.md` and `rigor-checklists.md`.
+
+**[`deep-reasoning`](skills/deep-reasoning/SKILL.md)** — a budget-aware, tiered deliberation
+protocol (triage → decompose → parallel paths → independent verification → search) that
+matches reasoning effort to difficulty. *Reach for it:* any genuinely hard problem that
+deserves more than a single pass. *Composes with:* the Workflow tool /
+`dispatching-parallel-agents` for the parallel paths.
+
+**[`deep-reasoning-ultra`](skills/deep-reasoning-ultra/SKILL.md)** — the `deep-reasoning`
+protocol plus a deterministic aggregation core (self-consistency, calibrated confidence,
+escalate/stop) that turns parallel reasoning paths into an auditable decision. *Reach for
+it:* the hardest, highest-stakes calls where you need a defensible confidence number.
+*Composes with:* `deep-reasoning` (it is the heavyweight tier).
+
+### Frame the question
+
+**[`research-design`](skills/research-design/SKILL.md)** — frames the question, states
+falsifiable hypotheses and success metrics, and plans experiments and ablations **before any
+data is seen**. *Reach for it:* starting an empirical project or defining what to test.
+*Composes with:* `literature-review` next; the pre-registered metrics feed
+`rigorous-validation`.
+
+**[`humanities-inquiry`](skills/humanities-inquiry/SKILL.md)** — close reading, hermeneutics,
+historiography, theoretical framing, and qualitative coding, where the goal is a defensible
+*interpretation* rather than an empirical measurement. *Reach for it:* interpretive or
+qualitative research. *Composes with:* `argumentation-and-sources` for source criticism.
+
+### Survey the field
+
+**[`literature-review`](skills/literature-review/SKILL.md)** — searches and critically
+appraises sources, maps the state of the art and the gaps, and produces a justified, ranked
+comparison of methods plus the **oracles an implementation must match**. *Reach for it:*
+surveying a field or choosing among competing methods. *Composes with:* `deep-research` for
+the search; hands its oracles to `faithful-implementation`.
+
+**[`argumentation-and-sources`](skills/argumentation-and-sources/SKILL.md)** — appraises
+primary and secondary sources, constructs and stress-tests arguments, maps scholarly debate,
+and catches fallacies and unsupported leaps. *Reach for it:* evidence and source criticism in
+argument-driven work. *Composes with:* `humanities-inquiry`.
+
+### Build it
+
+**[`faithful-implementation`](skills/faithful-implementation/SKILL.md)** — defines the
+literature-derived **test oracles** so that TDD proves the code matches its source, and
+detects divergence from it. *Reach for it:* implementing a method, algorithm, or model from
+the literature. *Composes with:* `writing-plans` → `subagent-driven-development` →
+`test-driven-development` (the build trio).
+
+### Validate it
+
+**[`rigorous-validation`](skills/rigorous-validation/SKILL.md)** — checks reproducibility,
+statistical validity, robustness, baselines, and leakage/bias, and red-teams your own
+findings before you believe them. *Reach for it:* once results exist. *Composes with:*
+`data:statistical-analysis` and `/code-review`.
+
+### Write it up
+
+**[`research-synthesis`](skills/research-synthesis/SKILL.md)** — interprets findings honestly,
+visualizes them, and writes claims **calibrated to the evidence** with explicit limitations.
+*Reach for it:* turning validated results into a report, paper, figures, or deck. *Composes
+with:* `data:create-viz`, `docx`/`pptx`.
+
+### Improve the skills
+
+**[`skill-forge`](skills/skill-forge/SKILL.md)** — the self-improvement engine: mines the
+insights each skill captured from its own sessions, distills them into a playbook, and
+proposes human-approved, gated edits to a skill. *Reach for it:* improving the suite itself.
+*Composes with:* the eval harness (`capture` / `forge`), `writing-skills`,
+`using-git-worktrees`, and the Workflow tool. Full how-to below.
