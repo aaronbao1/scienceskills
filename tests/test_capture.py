@@ -50,3 +50,31 @@ def test_snapshot_filters_by_attribution(tmp_path, monkeypatch):
 def test_snapshot_returns_none_when_missing(tmp_path, monkeypatch):
     monkeypatch.setattr(capture, "INSIGHTS_ROOT", tmp_path / "store")
     assert capture.snapshot("research-design", session_id="nope", transcripts_dir=tmp_path) is None
+
+def test_snapshot_uuid_less_record_not_attributed(tmp_path, monkeypatch):
+    """A record with no uuid and attributionSkill for a different skill must not
+    appear in the snapshot for the target skill (guards finding #1: None poisoning)."""
+    monkeypatch.setattr(capture, "INSIGHTS_ROOT", tmp_path / "store")
+    tdir = tmp_path / "proj"
+    tdir.mkdir()
+    rows = [
+        {"uuid": "a", "attributionSkill": "research-design", "type": "assistant"},
+        # no uuid, different skill — must NOT be selected
+        {"attributionSkill": "other-skill", "type": "tool"},
+        # no uuid, no attributionSkill — must NOT be selected
+        {"type": "tool"},
+    ]
+    f = tdir / "sess2.jsonl"
+    f.write_text("\n".join(json.dumps(r) for r in rows) + "\n")
+    out = capture.snapshot("research-design", session_id="sess2", transcripts_dir=tdir)
+    assert out is not None
+    result_rows = [json.loads(l) for l in out.read_text().splitlines() if l.strip()]
+    uuids = [r.get("uuid") for r in result_rows]
+    assert uuids == ["a"]  # only the properly attributed record
+
+def test_snapshot_nonexistent_transcripts_dir_returns_none(tmp_path, monkeypatch):
+    """snapshot() with a nonexistent transcripts_dir and no session_id returns None
+    instead of raising (guards finding #3)."""
+    monkeypatch.setattr(capture, "INSIGHTS_ROOT", tmp_path / "store")
+    nonexistent = tmp_path / "no_such_dir"
+    assert capture.snapshot("research-design", transcripts_dir=nonexistent) is None

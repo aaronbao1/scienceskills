@@ -68,6 +68,8 @@ def snapshot(skill: str, session_id: str | None = None,
         if not src.exists():
             return None
     else:
+        if not tdir.exists():
+            return None
         candidates = sorted(tdir.glob("*.jsonl"), key=lambda p: p.stat().st_mtime, reverse=True)
         if not candidates:
             return None
@@ -77,8 +79,8 @@ def snapshot(skill: str, session_id: str | None = None,
         records = _parse_jsonl(src)
     except OSError:
         return None
-    by_uuid = {r.get("uuid"): r for r in records}
-    attributed = {r.get("uuid") for r in records if r.get("attributionSkill") == skill}
+    by_uuid = {r["uuid"]: r for r in records if r.get("uuid") is not None}
+    attributed = {r["uuid"] for r in records if r.get("uuid") is not None and r.get("attributionSkill") == skill}
 
     def reaches_attributed(rec: dict) -> bool:
         seen: set = set()
