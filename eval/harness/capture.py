@@ -1,8 +1,10 @@
 """Deterministic capture I/O for skill-forge. File I/O only — no judgment."""
 from __future__ import annotations
 
+import argparse
 import json
 import os
+import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -106,3 +108,23 @@ def snapshot(skill: str, session_id: str | None = None,
         for r in selected:
             fh.write(json.dumps(r, ensure_ascii=False) + "\n")
     return out
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(prog="capture")
+    sub = parser.add_subparsers(dest="cmd", required=True)
+    s = sub.add_parser("snapshot"); s.add_argument("skill")
+    i = sub.add_parser("insight"); i.add_argument("skill")
+    args = parser.parse_args(argv)
+    if args.cmd == "snapshot":
+        path = snapshot(args.skill)
+        print(str(path) if path else "no transcript found")
+        return 0
+    record = json.loads(sys.stdin.read())
+    record.setdefault("skill", args.skill)
+    append_insight(args.skill, record)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

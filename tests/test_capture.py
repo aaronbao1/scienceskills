@@ -1,6 +1,8 @@
+import io
 import json
 import pytest
 from eval.harness import capture
+import sys
 
 def _valid():
     return {"ts": "2026-06-28T00:00:00Z", "skill": "research-design", "session_id": "s1",
@@ -78,3 +80,10 @@ def test_snapshot_nonexistent_transcripts_dir_returns_none(tmp_path, monkeypatch
     monkeypatch.setattr(capture, "INSIGHTS_ROOT", tmp_path / "store")
     nonexistent = tmp_path / "no_such_dir"
     assert capture.snapshot("research-design", transcripts_dir=nonexistent) is None
+
+def test_cli_insight_appends_from_stdin(tmp_path, monkeypatch):
+    monkeypatch.setattr(capture, "INSIGHTS_ROOT", tmp_path)
+    monkeypatch.setattr("sys.stdin", io.StringIO(json.dumps(_valid())))
+    rc = capture.main(["insight", "research-design"])
+    assert rc == 0
+    assert (tmp_path / "research-design" / "raw.jsonl").read_text().strip()
