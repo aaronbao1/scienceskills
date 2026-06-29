@@ -7,8 +7,8 @@ import os
 import sys
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-INSIGHTS_ROOT = REPO_ROOT / "skills" / "skill-forge" / "insights"
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+INSIGHTS_ROOT = _REPO_ROOT / "skills" / "skill-forge" / "insights"
 
 REQUIRED_INSIGHT_FIELDS = ("ts", "skill", "session_id", "context", "signals", "lesson", "confidence")
 

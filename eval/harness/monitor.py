@@ -4,8 +4,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-INSIGHTS_ROOT = REPO_ROOT / "skills" / "skill-forge" / "insights"
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+INSIGHTS_ROOT = _REPO_ROOT / "skills" / "skill-forge" / "insights"
 
 
 def _read_jsonl(path: Path) -> list[dict]:

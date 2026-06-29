@@ -26,8 +26,9 @@ skills/skill-forge/insights/<skill>/
 
 ## The loop
 
-1. **Capture (in each skill).** At session end, the skill snapshots its transcript and appends a robust,
-   generalized insight to `raw.jsonl` (`python3 -m eval.harness.capture`). Behavioral signals only —
+1. **Capture (in each skill).** At session end, the skill snapshots its transcript
+   (`python3 -m eval.harness.capture snapshot <skill>`) and appends a robust, generalized insight to
+   `raw.jsonl` (`python3 -m eval.harness.capture insight <skill>`). Behavioral signals only —
    correction/redo, abandonment, approval, hard failure, self-assessed struggle — no judge.
 2. **Distill.** Read recent `raw.jsonl` (and `transcripts/` for detail), contrast failures vs successes,
    and curate `playbook.md` with ADD / EDIT / UPVOTE / DOWNVOTE. Keep it **bounded** (default ≤25 entries;
@@ -36,7 +37,8 @@ skills/skill-forge/insights/<skill>/
    it as an attributed line edit `{old, new, reason}` against the target SKILL.md, in 1–2 candidates in
    isolated worktrees (`using-git-worktrees`).
 4. **Gate.** Run incumbent vs candidate on the **held-out `gate` split only** (`split: gate` tasks the loop
-   never mined against), K seeds, paired on the same tasks/seeds. Collect a results JSON and run
+   never mined against), paired on the same tasks and **K independent seeds per task (use K ≥ 3 — a single
+   seed collapses the seed-to-seed noise floor, so any positive delta would promote)**. Collect a results JSON and run
    `python3 -m eval.harness.forge <skill> results.json`. It runs the Goodhart monitor, then promotes only
    when there is **no critical-task regression**, the candidate **wins gold on every seed**, and the mean
    gain **exceeds the incumbent's seed-to-seed noise**. Exit 0 = promote-pending-approval, 1 = reject,
@@ -65,7 +67,8 @@ judging), and `eval.harness.forge` (gate + monitor + round log).
 ## Red flags (stop)
 
 - Promoting without human approval, or without a measured gain over the incumbent on the held-out split.
-- Gating on the dev split, on a sub-noise margin, or on a benchmark too small to have power.
+- Gating on the dev split, on a sub-noise margin, on a single seed (collapses the noise floor), or on a
+  benchmark too small to have power.
 - A single judge, a single A/B order, or a judge panel from one family (or the candidate's own family).
 - Editing the benchmark/rubric to make a candidate pass — improve the skill, not the test.
 - Continuing to crystallize while the monitor reports proxy↑/gold↓ (reward hacking).
