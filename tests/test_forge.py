@@ -73,3 +73,11 @@ def test_gold_per_seed_is_absolute(tmp_path, monkeypatch):
     hist = (tmp_path / "research-design" / "gate-history.jsonl").read_text().splitlines()
     rec = json.loads(hist[0])
     assert rec["gold_per_seed"] == pytest.approx([0.7, 0.72, 0.71])
+
+
+def test_reject_appends_one_round(tmp_path, monkeypatch):
+    monkeypatch.setattr(forge, "INSIGHTS_ROOT", tmp_path)
+    monkeypatch.setattr(monitor, "INSIGHTS_ROOT", tmp_path)
+    forge.evaluate(_results(0.50, 0.50), now_iso="2026-06-28T00:00:00Z")
+    hist = (tmp_path / "research-design" / "gate-history.jsonl").read_text().splitlines()
+    assert len(hist) == 1 and json.loads(hist[0])["decision"] == "reject"

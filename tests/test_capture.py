@@ -2,7 +2,6 @@ import io
 import json
 import pytest
 from eval.harness import capture
-import sys
 
 def _valid():
     return {"ts": "2026-06-28T00:00:00Z", "skill": "research-design", "session_id": "s1",

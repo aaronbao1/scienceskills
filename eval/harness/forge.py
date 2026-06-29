@@ -12,8 +12,8 @@ from statistics import fmean
 
 from eval.harness import gate, monitor
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-INSIGHTS_ROOT = REPO_ROOT / "skills" / "skill-forge" / "insights"
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+INSIGHTS_ROOT = _REPO_ROOT / "skills" / "skill-forge" / "insights"
 
 
 def _gate_runs(version: dict) -> list[dict]:
@@ -58,6 +58,9 @@ def evaluate(results: dict, *, now_iso: str) -> dict:
 
     store.mkdir(parents=True, exist_ok=True)
     hist_path = store / "gate-history.jsonl"
+    # `proxy` is reserved/unused: monitor.check() recomputes the proxy trend from
+    # raw.jsonl on a per-session clock while gate-history advances per gate round,
+    # so the two series are intentionally not aligned and we record a placeholder.
     rec = {"round": _next_round(hist_path), "ts": now_iso, "skill": skill,
            "incumbent_hash": results["incumbent"].get("hash"),
            "candidate_hash": results["candidate"].get("hash"),
