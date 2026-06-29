@@ -13,23 +13,33 @@ design is in [`docs/superpowers/specs/2026-06-27-scienceskills-design.md`](docs/
 
 The suite ships as a Claude Code plugin through the dev marketplace in
 [`.claude-plugin/`](.claude-plugin/) (marketplace `scienceskills-dev`, plugin
-`scienceskills`). Inside Claude Code:
+`scienceskills`). These are slash commands — **enter them one at a time**, letting the first
+finish before the second. (Pasting both together makes `marketplace add` treat the second
+line as part of the repo URL and the clone fails.)
+
+**Step 1** — register this repo as a plugin marketplace (Claude Code reads
+[`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json)):
 
 ```
 /plugin marketplace add aaronbao1/scienceskills
+```
+
+**Step 2** — once that succeeds, install the plugin from it:
+
+```
 /plugin install scienceskills@scienceskills-dev
 ```
 
-The first command registers this repo as a plugin marketplace (Claude Code reads
-[`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json)); the second installs
-the `scienceskills` plugin from it. Run `/plugin` anytime to browse, verify, or manage
-installed plugins.
+Run `/plugin` anytime to browse, verify, or manage installed plugins.
 
 **Local development** — to test edits to the skills without going through GitHub, add your
-clone as a marketplace by path, then install the same way:
+clone as a marketplace by path, then install — again, one command at a time:
 
 ```
 /plugin marketplace add /absolute/path/to/scienceskills
+```
+
+```
 /plugin install scienceskills@scienceskills-dev
 ```
 
