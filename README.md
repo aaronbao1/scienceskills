@@ -218,3 +218,26 @@ always keep deterministic ground-truth tasks as the non-judge tripwire.
 on the dev split, a sub-noise margin, or a single seed; a single judge or a single A/B order;
 editing the benchmark to make a candidate pass; crystallizing while the monitor shows
 proxy↑/gold↓; committing project-specific content into the store; leaving no git rollback path.
+
+## Eval harness
+
+The harness in [`eval/`](eval/) lints skills, validates benchmarks, captures session
+insights, and runs the promotion gate.
+
+| Command | Does |
+| --- | --- |
+| `python3 -m eval.harness.cli lint` | Lint every `skills/*/SKILL.md` (frontmatter, structure). Exit 1 if any issue. |
+| `python3 -m eval.harness.cli validate` | Validate every `eval/benchmarks/*/tasks.yaml`. Exit 1 on any error. |
+| `python3 -m eval.harness.capture snapshot <skill>` | Snapshot the current session's transcript into the skill's insight store. |
+| `python3 -m eval.harness.capture insight <skill>` | Append one generalized insight record (piped JSON) to `raw.jsonl`. |
+| `python3 -m eval.harness.forge <skill> results.json` | Run the promotion gate + Goodhart monitor. Exit 0 promote-pending-approval / 1 reject / 2 halt. |
+
+**Benchmark task schema** (`eval/benchmarks/<skill>/tasks.yaml`): each task has an `id`, a
+`kind` (`judge` for rubric-scored, `ground_truth` for deterministic), a `prompt`, and a
+`split`. Ground-truth tasks add a `scorer` (e.g. `numeric`), an `expected` value, and a
+`tolerance`. Rubrics live in [`eval/rubrics/`](eval/rubrics/), one per skill.
+
+**Splits matter for the gate.** `split: dev` tasks are for iteration; `split: gate` tasks are
+**held out** — the improvement loop never mines against them, so a candidate that wins on the
+`gate` split has earned a real, un-overfit gain. The `forge` gate scores the held-out `gate`
+split only.
