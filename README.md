@@ -9,6 +9,48 @@ research project, how the self-improvement engine (`skill-forge`) works, and the
 for the eval harness. Operating standards live in [`CLAUDE.md`](CLAUDE.md); the original
 design is in [`docs/superpowers/specs/2026-06-27-scienceskills-design.md`](docs/superpowers/specs/2026-06-27-scienceskills-design.md).
 
+## Install into Claude Code
+
+The suite ships as a Claude Code plugin through the dev marketplace in
+[`.claude-plugin/`](.claude-plugin/) (marketplace `scienceskills-dev`, plugin
+`scienceskills`). Inside Claude Code:
+
+```
+/plugin marketplace add aaronbao1/scienceskills
+/plugin install scienceskills@scienceskills-dev
+```
+
+The first command registers this repo as a plugin marketplace (Claude Code reads
+[`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json)); the second installs
+the `scienceskills` plugin from it. Run `/plugin` anytime to browse, verify, or manage
+installed plugins.
+
+**Local development** — to test edits to the skills without going through GitHub, add your
+clone as a marketplace by path, then install the same way:
+
+```
+/plugin marketplace add /absolute/path/to/scienceskills
+/plugin install scienceskills@scienceskills-dev
+```
+
+**Committed config** — to enable the plugin from `settings.json` instead of the commands
+above (e.g. a shared `.claude/settings.json`):
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "scienceskills-dev": {
+      "source": { "source": "github", "repo": "aaronbao1/scienceskills" }
+    }
+  },
+  "enabledPlugins": { "scienceskills@scienceskills-dev": true }
+}
+```
+
+Once installed, the skills activate automatically on matching work, or you can invoke one by
+name (e.g. `scientific-rigor`, `research-design`) — see below. To build or test the suite
+itself, see [Dev setup](#dev-setup).
+
 ## How the skills activate
 
 The suite is a Claude Code plugin. Skills live in [`skills/`](skills/), one folder per
