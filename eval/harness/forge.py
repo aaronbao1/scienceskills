@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 from statistics import fmean
@@ -49,12 +50,18 @@ def evaluate(results: dict, *, now_iso: str) -> dict:
     decision = "promote" if d.promote else "reject"
     gold_gate_mean = fmean([r["score"] for r in cand]) if cand else 0.0
 
+    # Compute absolute per-seed candidate gold (sorted by seed).
+    seed_scores: dict[int, list[float]] = defaultdict(list)
+    for r in cand:
+        seed_scores[r["seed"]].append(r["score"])
+    gold_per_seed = [fmean(seed_scores[s]) for s in sorted(seed_scores)] if seed_scores else []
+
     store.mkdir(parents=True, exist_ok=True)
     hist_path = store / "gate-history.jsonl"
     rec = {"round": _next_round(hist_path), "ts": now_iso, "skill": skill,
            "incumbent_hash": results["incumbent"].get("hash"),
            "candidate_hash": results["candidate"].get("hash"),
-           "gold_gate_mean": gold_gate_mean, "gold_per_seed": list(d.per_seed_delta.values()),
+           "gold_gate_mean": gold_gate_mean, "gold_per_seed": gold_per_seed,
            "proxy": 0.0, "decision": decision, "reason": d.reason}
     with hist_path.open("a", encoding="utf-8") as fh:
         fh.write(json.dumps(rec) + "\n")
@@ -68,7 +75,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("skill")
     parser.add_argument("results")
     args = parser.parse_args(argv)
-    results = json.loads(Path(args.results).read_text())
+    try:
+        results = json.loads(Path(args.results).read_text())
+    except OSError as exc:
+        print(f"forge: cannot read results file: {exc}", file=sys.stderr)
+        return 2
+    except json.JSONDecodeError as exc:
+        print(f"forge: malformed JSON in results file: {exc}", file=sys.stderr)
+        return 2
     results.setdefault("skill", args.skill)
     out = evaluate(results, now_iso=datetime.now(timezone.utc).isoformat())
     print(out["proposal"])
