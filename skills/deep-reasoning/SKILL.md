@@ -53,3 +53,21 @@ as a verified result.
 - Majority-voting a consensus when the paths might be uniformly wrong.
 - Trusting a chain's critique of its own reasoning instead of an independent check.
 - Presenting an answer with false confidence and no statement of what would change it.
+
+## Consult
+
+Before starting, read your playbook of learned heuristics:
+`skills/skill-forge/insights/deep-reasoning/playbook.md` (skip if absent).
+
+## Capture (run at session end)
+
+When you finish a task that used this skill, record what happened so skill-forge can learn:
+
+1. Snapshot this session: `python3 -m eval.harness.capture snapshot deep-reasoning`
+2. Reflect against the five signals — user correction/redo · abandonment · approval · hard failure
+   (tool/hook errors) · self-assessed struggle — then append ONE **generalized** insight (no
+   project-specifics): pipe a JSON record to `python3 -m eval.harness.capture insight deep-reasoning` with
+   fields `{ts, session_id, context, signals, what_worked, what_failed, lesson, proposed_edit?, confidence}`.
+
+Record the *lesson*, not the incident. If a specific line of this SKILL.md caused a failure, include a
+`proposed_edit` of `{old, new, reason}`.

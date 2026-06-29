@@ -1,35 +1,34 @@
-from eval.harness.gate import decide_promotion, PromotionDecision
+# tests/test_gate.py
+from eval.harness.gate import decide
 
+def _runs(scores_by_seed, critical=False):
+    # scores_by_seed: {seed: [(task_id, score), ...]}
+    out = []
+    for seed, pairs in scores_by_seed.items():
+        for task_id, score in pairs:
+            out.append({"task_id": task_id, "seed": seed, "score": score, "critical": critical})
+    return out
 
-def _task(tid, inc, cand, critical=False):
-    return {"task_id": tid, "incumbent": inc, "candidate": cand, "critical": critical}
+def test_promote_when_wins_every_seed_above_noise():
+    inc = _runs({1: [("t", 0.50)], 2: [("t", 0.50)], 3: [("t", 0.50)]})
+    cand = _runs({1: [("t", 0.70)], 2: [("t", 0.72)], 3: [("t", 0.71)]})
+    d = decide(inc, cand)
+    assert d.promote and d.mean_delta > d.noise_floor
 
+def test_reject_sub_noise_gain():
+    inc = _runs({1: [("t", 0.40)], 2: [("t", 0.60)], 3: [("t", 0.50)]})  # noisy incumbent
+    cand = _runs({1: [("t", 0.41)], 2: [("t", 0.61)], 3: [("t", 0.51)]})  # tiny gain
+    d = decide(inc, cand)
+    assert not d.promote and "noise floor" in d.reason
 
-def test_promotes_on_clear_gain():
-    d = decide_promotion(0.70, 0.80, [_task("t1", 0.7, 0.8)], margin=0.02)
-    assert isinstance(d, PromotionDecision)
-    assert d.promote
+def test_critical_regression_vetoes():
+    inc = _runs({1: [("t", 0.50)]}, critical=True)
+    cand = _runs({1: [("t", 0.40)]}, critical=True)
+    d = decide(inc, cand)
+    assert not d.promote and d.critical_regression
 
-
-def test_rejects_insufficient_gain():
-    d = decide_promotion(0.80, 0.805, [_task("t1", 0.8, 0.805)], margin=0.02)
-    assert not d.promote
-    assert "insufficient" in d.reason
-
-
-def test_rejects_critical_regression_even_with_gain():
-    per_task = [_task("t1", 0.5, 0.9), _task("crit", 1.0, 0.0, critical=True)]
-    d = decide_promotion(0.75, 0.90, per_task, margin=0.02)
-    assert not d.promote
-    assert "crit" in d.reason
-
-
-def test_boundary_exactly_margin_promotes():
-    d = decide_promotion(0.50, 0.52, [_task("t1", 0.5, 0.52)], margin=0.02)
-    assert d.promote
-
-
-def test_nominal_margin_gain_promotes_despite_float_error():
-    # 0.82 - 0.80 == 0.019999999999999907 in IEEE-754; a nominal 0.02 gain must promote
-    d = decide_promotion(0.80, 0.82, [_task("t1", 0.80, 0.82)], margin=0.02)
-    assert d.promote
+def test_reject_when_loses_one_seed():
+    inc = _runs({1: [("t", 0.50)], 2: [("t", 0.50)]})
+    cand = _runs({1: [("t", 0.70)], 2: [("t", 0.45)]})  # regresses on seed 2
+    d = decide(inc, cand)
+    assert not d.promote and "seed" in d.reason

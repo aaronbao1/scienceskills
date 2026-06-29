@@ -39,3 +39,21 @@ Output: a framed interpretation with its method, evidence, and acknowledged limi
 - An interpretation with no textual or archival anchor.
 - A reading that ignores the strongest rival interpretation.
 - Positionality and ethics omitted when the material demands them.
+
+## Consult
+
+Before starting, read your playbook of learned heuristics:
+`skills/skill-forge/insights/humanities-inquiry/playbook.md` (skip if absent).
+
+## Capture (run at session end)
+
+When you finish a task that used this skill, record what happened so skill-forge can learn:
+
+1. Snapshot this session: `python3 -m eval.harness.capture snapshot humanities-inquiry`
+2. Reflect against the five signals — user correction/redo · abandonment · approval · hard failure
+   (tool/hook errors) · self-assessed struggle — then append ONE **generalized** insight (no
+   project-specifics): pipe a JSON record to `python3 -m eval.harness.capture insight humanities-inquiry` with
+   fields `{ts, session_id, context, signals, what_worked, what_failed, lesson, proposed_edit?, confidence}`.
+
+Record the *lesson*, not the incident. If a specific line of this SKILL.md caused a failure, include a
+`proposed_edit` of `{old, new, reason}`.

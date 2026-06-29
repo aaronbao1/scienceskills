@@ -1,53 +1,64 @@
+# eval/harness/gate.py
+"""Single deterministic promotion decision for skill-forge."""
 from __future__ import annotations
 
 from dataclasses import dataclass
+from statistics import fmean, pstdev
 
 
-@dataclass(frozen=True)
-class PromotionDecision:
+@dataclass
+class Decision:
     promote: bool
     reason: str
+    mean_delta: float
+    per_seed_delta: dict
+    noise_floor: float
+    critical_regression: bool
 
 
-def decide_promotion(
-    incumbent_overall: float,
-    candidate_overall: float,
-    per_task: list[dict],
-    margin: float = 0.02,
-) -> PromotionDecision:
-    """Promote only on a clear overall gain with no critical-task regression."""
-    regressions = [
-        t["task_id"]
-        for t in per_task
-        if t.get("critical") and t["candidate"] < t["incumbent"]
-    ]
-    if regressions:
-        return PromotionDecision(False, f"critical regression on: {', '.join(regressions)}")
-    delta = candidate_overall - incumbent_overall
-    if delta < margin - 1e-9:
-        return PromotionDecision(False, f"insufficient gain: +{delta:.3f} < margin {margin}")
-    return PromotionDecision(True, f"promote: +{delta:.3f} over incumbent, no critical regression")
+def decide(incumbent_runs, candidate_runs, *, eps=1e-9, use_sign_test=False, alpha=0.05) -> Decision:
+    inc = {(r["task_id"], r["seed"]): r for r in incumbent_runs}
+    cand = {(r["task_id"], r["seed"]): r for r in candidate_runs}
+    keys = sorted(set(inc) & set(cand))
+    if not keys:
+        return Decision(False, "no paired runs", 0.0, {}, 0.0, False)
 
+    critical = False
+    for k in keys:
+        if (inc[k].get("critical") or cand[k].get("critical")) and cand[k]["score"] < inc[k]["score"]:
+            critical = True
+            break
 
-def decide_promotion_stat(verdict, per_task: list[dict]) -> PromotionDecision:
-    """Promote only on a statistically significant gain with no critical-task regression.
+    deltas = {k: cand[k]["score"] - inc[k]["score"] for k in keys}
+    mean_delta = fmean(deltas.values())
+    seeds = sorted({s for (_, s) in keys})
+    per_seed = {s: fmean([deltas[k] for k in keys if k[1] == s]) for s in seeds}
+    inc_seed_means = [fmean([inc[k]["score"] for k in keys if k[1] == s]) for s in seeds]
+    noise_floor = max(pstdev(inc_seed_means) if len(inc_seed_means) > 1 else 0.0, eps)
 
-    `verdict` is a stats.StatVerdict or None (no held-out observations). The critical
-    veto is checked first so a ground-truth regression always blocks promotion.
-    """
-    regressions = [
-        t["task_id"]
-        for t in per_task
-        if t.get("critical") and t["candidate"] < t["incumbent"] - 1e-9
-    ]
-    if regressions:
-        return PromotionDecision(False, f"critical regression on: {', '.join(regressions)}")
-    if verdict is None:
-        return PromotionDecision(False, "no held-out (gate) observations to test")
-    detail = (
-        f"mean {verdict.mean_delta:+.3f}, CI low {verdict.ci_low:+.3f}, "
-        f"p={verdict.p_value:.3f}, alpha={verdict.alpha:.3f}"
-    )
-    if not verdict.significant:
-        return PromotionDecision(False, f"not significant: {detail}")
-    return PromotionDecision(True, f"promote: {detail} (CI low > 0 and p < alpha)")
+    if critical:
+        return Decision(False, "critical-task regression", mean_delta, per_seed, noise_floor, True)
+
+    reasons = []
+    if not mean_delta > 0:
+        reasons.append("mean delta not positive")
+    wins_every_seed = all(d > 0 for d in per_seed.values())
+    if not wins_every_seed:
+        reasons.append("loses on >=1 seed")
+    beats_noise = mean_delta > noise_floor
+    if not beats_noise:
+        reasons.append(f"gain {mean_delta:.4f} <= noise floor {noise_floor:.4f}")
+
+    promote = (mean_delta > 0) and wins_every_seed and beats_noise
+    if promote and use_sign_test:
+        from scipy.stats import wilcoxon
+        try:
+            _, p = wilcoxon(list(deltas.values()))
+            if p >= alpha:
+                promote = False
+                reasons.append(f"sign test p={p:.3f} >= alpha")
+        except ValueError:
+            pass
+
+    return Decision(promote, "promote" if promote else "; ".join(reasons), mean_delta, per_seed,
+                    noise_floor, False)

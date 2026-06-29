@@ -38,3 +38,21 @@ Output: a sourced, stress-tested argument with its debate map and residual weakn
 - A thesis supported only by sources that already agree with it.
 - A claim resting on one uncorroborated or unexamined source.
 - The strongest counterargument left unaddressed.
+
+## Consult
+
+Before starting, read your playbook of learned heuristics:
+`skills/skill-forge/insights/argumentation-and-sources/playbook.md` (skip if absent).
+
+## Capture (run at session end)
+
+When you finish a task that used this skill, record what happened so skill-forge can learn:
+
+1. Snapshot this session: `python3 -m eval.harness.capture snapshot argumentation-and-sources`
+2. Reflect against the five signals — user correction/redo · abandonment · approval · hard failure
+   (tool/hook errors) · self-assessed struggle — then append ONE **generalized** insight (no
+   project-specifics): pipe a JSON record to `python3 -m eval.harness.capture insight argumentation-and-sources` with
+   fields `{ts, session_id, context, signals, what_worked, what_failed, lesson, proposed_edit?, confidence}`.
+
+Record the *lesson*, not the incident. If a specific line of this SKILL.md caused a failure, include a
+`proposed_edit` of `{old, new, reason}`.

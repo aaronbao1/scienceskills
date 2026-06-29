@@ -1,98 +1,73 @@
 ---
 name: skill-forge
-description: Use to improve the research skills themselves — runs the self-improvement loop that mines weaknesses, generates candidate skill versions, evaluates them with judges and A/B tournaments, and proposes a human-approved promotion.
+description: Use to improve the research skills themselves — runs a self-contained, log-driven loop that mines insights each skill captured from its own sessions, distills them into a playbook, and proposes human-approved, gated edits to a skill.
 ---
 
 # Skill Forge
 
-The engine that makes this suite self-improving. It evolves one skill at a time and never
-promotes a change without measured evidence and your approval. The deterministic scoring,
-gating, and reporting live in Python (`python3 -m eval.harness.forge`); the
-non-deterministic steps — running a skill on a task, judging quality — are run by dispatched
-agents.
+The self-improvement engine for this suite. It is **self-contained**: every target skill captures its own
+session insights into a central store under `skills/skill-forge/insights/<skill>/`, and skill-forge turns
+those logs into improvements. It evolves one skill at a time and never promotes a durable change without
+measured evidence on a held-out benchmark and your approval.
 
-## The cycle (one target skill)
+Improvement lives in two layers:
+- **Playbook (fast, reversible, no gate).** Distilled heuristics each skill consults at use-time.
+- **SKILL.md (slow, gated, rare).** Durable edits, promoted only through the held-out gate + your approval.
 
-1. **Mine.** Gather concrete weaknesses and new best-practices for the target skill from
-   its eval history, recent session transcripts, and `deep-research`. Turn them into a short
-   list of specific, testable improvements.
-2. **Generate candidates (reflective mutation).** Do not draft from scratch. Feed the proposer
-   the FAILED transcripts/traces from the mine step plus the rubric and judge feedback, and use
-   `writing-skills` to express each fix as a structured line edit that attributes a specific
-   failure to a specific line of the SKILL.md — `{old, new, reason}`. Apply the edits
-   deterministically with `eval.harness.mutation` (a candidate cannot blindly rewrite the whole
-   document or target an ambiguous line). Produce two or three such candidates in isolated
-   worktrees via `using-git-worktrees`, and carry them on an instance-wise Pareto frontier
-   (`eval.harness.pareto`) rather than always keeping the best-on-aggregate — aggregate-best
-   selection collapses to a local optimum after one round.
-3. **Run on the benchmark slice.** For the skill's `eval/benchmarks/<skill>/tasks.yaml`,
-   dispatch one agent per (version, task) that adopts that version's SKILL.md and performs
-   the task. Score each task in the range 0 to 1:
-   - `ground_truth` tasks: score with the harness scorer (`eval.harness.score`) and mark
-     them critical — a regression on a verifiable task blocks promotion.
-   - `judge` tasks: dispatch a panel of at least three judge agents **from disjoint model
-     families, none from the candidate-generator's family** (a same-family judge can reward its
-     own house style — a reward-hacking channel). Run them at/near temperature 0, **sanitize any
-     candidate-controlled text before it enters the judge template** (a content-free or
-     delimiter-injecting output can otherwise hijack the score), score against
-     `eval/rubrics/<skill>.md`, blend the dimension scores with `eval.harness.blend`, and take
-     the panel majority. A disjoint-family panel reduces — but does not eliminate — shared judge
-     bias, so keep the deterministic ground-truth tasks as the non-judge tripwire.
-4. **A/B tournament.** For each task, dispatch judge agents to compare the incumbent's and
-   the candidate's outputs head-to-head **in both orders**. A side wins only if it wins in both
-   orders; otherwise score a tie — order-swapped scoring stops position bias from manufacturing a
-   win. Flag any comparison the winning side won while being materially longer (possible verbosity
-   bias) for the human reviewer.
-5. **Gate and propose.** Score on the **held-out gate split only** — the `split: gate`
-   tasks the loop never mined or generated against — pairing incumbent and candidate on the
-   same tasks and seeds. Collect per-(task, seed) scores into a results JSON and run
-   `python3 -m eval.harness.forge results.json`. It builds the paired held-out deltas and
-   promotes only on **statistical significance** (bootstrap CI lower bound above zero and a
-   paired permutation p below the Bonferroni-corrected alpha for the number of candidates),
-   with no critical-task regression. Present the proposal and the evidence to your human
-   partner. Promote only on approval — then replace the SKILL.md and `git tag` the new
-   version so the prior one is always one `git checkout` away.
+## Store
 
-## Loop control (across rounds)
+```
+skills/skill-forge/insights/<skill>/
+  transcripts/<session-id>.jsonl   raw session snapshots (gitignored cache)
+  raw.jsonl                        per-session insight records (committed)
+  playbook.md                      curated heuristics, bounded, inline vote tags (committed)
+  gate-history.jsonl               one line per gate round (committed)
+```
 
-The single-skill cycle runs many times; these guards keep it honest over rounds and are gated by
-`python3 -m eval.harness.loop_control <history.json>`:
+## The loop
 
-- **Accumulate the eval anchor.** Keep a permanent seed of human/ground-truth tasks in the
-  benchmark every round; never replace it with self-generated transcripts. `eval.harness.anchor`
-  flags a dropped seed.
-- **Halt on over-optimization.** Track the judge/dev (proxy) score and the deterministic
-  ground-truth (gold) score each round. When the proxy rises while gold stalls or drops, HALT —
-  the loop is Goodharting the judge. Cap consecutive judge-only promotions. Edit-distance or KL
-  penalties alone do not fix this, so the halt watches the proxy/gold divergence directly.
-- **Refresh on a statistical trigger.** When the dev-set and held-out gate performance diverge
-  significantly (`eval.harness.anchor` reuses the gate's paired significance test), regenerate
-  fresh ground-truth tasks and bound the rounds run against any fixed set.
+1. **Capture (in each skill).** At session end, the skill snapshots its transcript and appends a robust,
+   generalized insight to `raw.jsonl` (`python3 -m eval.harness.capture`). Behavioral signals only —
+   correction/redo, abandonment, approval, hard failure, self-assessed struggle — no judge.
+2. **Distill.** Read recent `raw.jsonl` (and `transcripts/` for detail), contrast failures vs successes,
+   and curate `playbook.md` with ADD / EDIT / UPVOTE / DOWNVOTE. Keep it **bounded** (default ≤25 entries;
+   prune lowest net-vote). Heuristics must be generalized — no project-specifics.
+3. **Crystallize.** When a heuristic has earned its keep (net votes ≥4, recurs across ≥3 sessions), express
+   it as an attributed line edit `{old, new, reason}` against the target SKILL.md, in 1–2 candidates in
+   isolated worktrees (`using-git-worktrees`).
+4. **Gate.** Run incumbent vs candidate on the **held-out `gate` split only** (`split: gate` tasks the loop
+   never mined against), K seeds, paired on the same tasks/seeds. Collect a results JSON and run
+   `python3 -m eval.harness.forge <skill> results.json`. It runs the Goodhart monitor, then promotes only
+   when there is **no critical-task regression**, the candidate **wins gold on every seed**, and the mean
+   gain **exceeds the incumbent's seed-to-seed noise**. Exit 0 = promote-pending-approval, 1 = reject,
+   2 = halt.
+5. **Promote.** On pass **and your approval**: replace the SKILL.md, mark the heuristic `crystallized` and
+   retire it from the playbook, and `git tag` the new version so the prior one is one `git checkout` away.
+
+## Judging guidance (orchestration, not code)
+
+When a benchmark task is judge-scored: use a panel of ≥3 judges from **disjoint model families, none from
+the candidate-generator's family**; compare both A/B orders and count a win only if it wins both; sanitize
+candidate-controlled text before it enters the judge template; and always keep deterministic ground-truth
+tasks as the non-judge tripwire. A disjoint panel **reduces, not eliminates**, shared bias.
 
 ## Results JSON shape
 
-`{"skill", "alpha", "n_candidates", "seed", "incumbent": {"hash", "runs": [{"task_id",
-"split", "seed", "score", "critical"}]}, "candidate": {...}, "tournament": [{"task_id",
-"winner": "candidate|incumbent|tie"}]}`
+`{"skill", "incumbent": {"hash", "runs": [{"task_id","seed","score","critical","split"}]},
+"candidate": {...}, "use_sign_test"?}`
 
 ## Composes with
 
-- `deep-research` (mining), `writing-skills` and `anthropic-skills:skill-creator` (candidates),
-  `using-git-worktrees` (isolation), `dispatching-parallel-agents` and the Workflow tool
-  (parallel running and judging), and `eval.harness.forge` (deterministic gating and report).
+`deep-research` and the captured `raw.jsonl` (mining), `writing-skills` (candidate edits),
+`using-git-worktrees` (isolation), `dispatching-parallel-agents` / the Workflow tool (parallel running and
+judging), and `eval.harness.forge` (gate + monitor + round log).
 
 ## Red flags (stop)
 
-- Promoting without human approval, or without a measured gain over the incumbent.
-- A single judge instead of a panel — one judge is easy to game.
-- Editing the benchmark or rubric to make a candidate pass (reward hacking). Improve the
-  skill, not the test.
+- Promoting without human approval, or without a measured gain over the incumbent on the held-out split.
+- Gating on the dev split, on a sub-noise margin, or on a benchmark too small to have power.
+- A single judge, a single A/B order, or a judge panel from one family (or the candidate's own family).
+- Editing the benchmark/rubric to make a candidate pass — improve the skill, not the test.
+- Continuing to crystallize while the monitor reports proxy↑/gold↓ (reward hacking).
+- Committing non-generalized, project-specific content into the insight store.
 - No rollback path — every promotion must leave the prior version recoverable in git.
-- Gating on the dev split, or on a benchmark too small to have power — a sub-noise margin is
-  not a real gain. Grow or refresh the held-out set instead.
-- Promoting on a raw point-margin without a significance test, or testing several candidates
-  without Bonferroni-correcting the threshold.
-- A single-order A/B comparison, or a judge panel drawn from one model family (or the candidate's
-  own family) — position and self-preference bias can fabricate the margin.
-- Feeding raw candidate-controlled text into the judge template without sanitizing it, or trusting
-  a judge-only verdict with no deterministic ground-truth tripwire.

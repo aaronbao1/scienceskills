@@ -1,86 +1,75 @@
+# tests/test_forge.py
+from __future__ import annotations
+
 import json
-from eval.harness.forge import content_hash, evaluate, main
-from eval.harness.gate import PromotionDecision
+import pytest
+from eval.harness import forge, monitor
+
+def _version(hash_, score):
+    return {"hash": hash_, "runs": [
+        {"task_id": "t", "seed": s, "score": score, "critical": False, "split": "gate"} for s in (1, 2, 3)]}
+
+def _results(inc_score, cand_score):
+    return {"skill": "research-design",
+            "incumbent": _version("h0", inc_score), "candidate": _version("h1", cand_score)}
+
+def test_promote_exit0_appends_one_round(tmp_path, monkeypatch):
+    monkeypatch.setattr(forge, "INSIGHTS_ROOT", tmp_path)
+    monkeypatch.setattr(monitor, "INSIGHTS_ROOT", tmp_path)
+    out = forge.evaluate(_results(0.50, 0.70), now_iso="2026-06-28T00:00:00Z")
+    assert out["exit"] == 0 and out["decision"] == "promote"
+    hist = (tmp_path / "research-design" / "gate-history.jsonl").read_text().splitlines()
+    assert len(hist) == 1 and json.loads(hist[0])["round"] == 1
+
+def test_reject_exit1(tmp_path, monkeypatch):
+    monkeypatch.setattr(forge, "INSIGHTS_ROOT", tmp_path)
+    monkeypatch.setattr(monitor, "INSIGHTS_ROOT", tmp_path)
+    out = forge.evaluate(_results(0.50, 0.50), now_iso="2026-06-28T00:00:00Z")
+    assert out["exit"] == 1 and out["decision"] == "reject"
+
+def test_halt_exit2_when_monitor_halts(tmp_path, monkeypatch):
+    monkeypatch.setattr(forge, "INSIGHTS_ROOT", tmp_path)
+    monkeypatch.setattr(monitor, "INSIGHTS_ROOT", tmp_path)
+    d = tmp_path / "research-design"; d.mkdir(parents=True)
+    (d / "raw.jsonl").write_text("\n".join(json.dumps({"signals": {"approval": a}}) for a in (False, True, True)) + "\n")
+    (d / "gate-history.jsonl").write_text("\n".join(json.dumps({"gold_gate_mean": g}) for g in (0.6, 0.55, 0.5)) + "\n")
+    out = forge.evaluate(_results(0.50, 0.90), now_iso="2026-06-28T00:00:00Z")
+    assert out["exit"] == 2 and out["decision"] == "halt"
 
 
-def _results(cand_score, critical=False):
+def test_main_bad_input_returns_2(tmp_path):
+    # Missing file — should return 2, not raise.
+    assert forge.main(["research-design", "/no/such/file.json"]) == 2
+
+    # Malformed JSON — should return 2, not raise.
+    bad = tmp_path / "bad.json"
+    bad.write_text("{ not valid json }")
+    assert forge.main(["research-design", str(bad)]) == 2
+
+
+def _results_per_seed(inc_score: float, cand_scores: list[float]) -> dict:
+    """Build results with one run per seed for each of seeds 1/2/3."""
+    inc_runs = [
+        {"task_id": "t", "seed": s, "score": inc_score, "critical": False, "split": "gate"}
+        for s in (1, 2, 3)
+    ]
+    cand_runs = [
+        {"task_id": "t", "seed": s, "score": sc, "critical": False, "split": "gate"}
+        for s, sc in zip((1, 2, 3), cand_scores)
+    ]
     return {
-        "skill": "demo",
-        "margin": 0.02,
-        "incumbent": {"hash": "i", "task_scores": [{"task_id": "t1", "score": 0.70, "critical": critical}]},
-        "candidate": {"hash": "c", "task_scores": [{"task_id": "t1", "score": cand_score, "critical": critical}]},
-        "tournament": [{"task_id": "t1", "winner": "candidate"}],
+        "skill": "research-design",
+        "incumbent": {"hash": "h0", "runs": inc_runs},
+        "candidate": {"hash": "h1", "runs": cand_runs},
     }
 
 
-def test_content_hash_stable_and_short():
-    h1 = content_hash("hello")
-    h2 = content_hash("hello")
-    assert h1 == h2
-    assert len(h1) == 12
-    assert content_hash("world") != h1
-
-
-def test_evaluate_promotes_on_gain():
-    decision, report = evaluate(_results(0.90))
-    assert isinstance(decision, PromotionDecision)
-    assert decision.promote
-    assert "# Promotion proposal — demo" in report
-
-
-def test_evaluate_rejects_small_gain():
-    decision, _ = evaluate(_results(0.705))
-    assert not decision.promote
-
-
-def test_main_exit_codes(tmp_path):
-    promote_file = tmp_path / "promote.json"
-    promote_file.write_text(json.dumps(_results(0.90)), encoding="utf-8")
-    assert main([str(promote_file)]) == 0
-
-    reject_file = tmp_path / "reject.json"
-    reject_file.write_text(json.dumps(_results(0.705)), encoding="utf-8")
-    assert main([str(reject_file)]) == 1
-
-
-def test_incumbent_critical_regression_blocks_even_with_overall_gain():
-    results = {
-        "skill": "demo", "margin": 0.02,
-        "incumbent": {"hash": "i", "task_scores": [
-            {"task_id": "t1", "score": 1.0, "critical": True},
-            {"task_id": "t2", "score": 0.0},
-            {"task_id": "t3", "score": 0.0}]},
-        "candidate": {"hash": "c", "task_scores": [
-            {"task_id": "t1", "score": 0.0},
-            {"task_id": "t2", "score": 1.0},
-            {"task_id": "t3", "score": 1.0}]},
-        "tournament": []}
-    decision, _ = evaluate(results)
-    assert not decision.promote
-    assert "t1" in decision.reason
-
-
-def test_load_results_roundtrip(tmp_path):
-    import json
-    from eval.harness.forge import load_results
-    p = tmp_path / "r.json"
-    payload = {"skill": "x", "margin": 0.02, "incumbent": {"hash": "i", "task_scores": []}, "candidate": {"hash": "c", "task_scores": []}, "tournament": []}
-    p.write_text(json.dumps(payload), encoding="utf-8")
-    assert load_results(p) == payload
-
-
-def test_main_empty_task_scores_returns_2(tmp_path):
-    import json
-    p = tmp_path / "e.json"
-    p.write_text(
-        json.dumps(
-            {
-                "skill": "x",
-                "incumbent": {"task_scores": []},
-                "candidate": {"task_scores": []},
-                "tournament": [],
-            }
-        ),
-        encoding="utf-8",
-    )
-    assert main([str(p)]) == 2
+def test_gold_per_seed_is_absolute(tmp_path, monkeypatch):
+    monkeypatch.setattr(forge, "INSIGHTS_ROOT", tmp_path)
+    monkeypatch.setattr(monitor, "INSIGHTS_ROOT", tmp_path)
+    cand_scores = [0.7, 0.72, 0.71]
+    results = _results_per_seed(0.5, cand_scores)
+    forge.evaluate(results, now_iso="2026-06-28T00:00:00Z")
+    hist = (tmp_path / "research-design" / "gate-history.jsonl").read_text().splitlines()
+    rec = json.loads(hist[0])
+    assert rec["gold_per_seed"] == pytest.approx([0.7, 0.72, 0.71])
