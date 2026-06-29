@@ -241,3 +241,48 @@ insights, and runs the promotion gate.
 **held out** — the improvement loop never mines against them, so a candidate that wins on the
 `gate` split has earned a real, un-overfit gain. The `forge` gate scores the held-out `gate`
 split only.
+
+## Reference files
+
+Some skills carry deep-dive companions and per-skill learned heuristics, loaded only when
+relevant:
+
+- **`scientific-rigor`** →
+  [`reasoning-and-creativity.md`](skills/scientific-rigor/reasoning-and-creativity.md)
+  (structured creativity: diverge widely, then prune with explicit criteria) and
+  [`rigor-checklists.md`](skills/scientific-rigor/rigor-checklists.md) (detailed per-phase
+  checklists).
+- **Every skill** consults its learned playbook at
+  `skills/skill-forge/insights/<skill>/playbook.md` before starting (skipped if absent) and
+  captures insights back to the same store at session end.
+- **Design & planning history** lives in
+  [`docs/superpowers/specs/`](docs/superpowers/specs/) (design docs) and
+  [`docs/superpowers/plans/`](docs/superpowers/plans/) (implementation plans).
+
+## Dev setup
+
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+pytest
+```
+
+Lint skills and validate benchmarks:
+
+```bash
+python3 -m eval.harness.cli lint
+python3 -m eval.harness.cli validate
+```
+
+## Repo layout
+
+```
+skills/         one folder per skill (SKILL.md + any reference files)
+  skill-forge/insights/<skill>/   the self-improvement store (playbook, raw.jsonl, …)
+eval/
+  harness/      lint, validate, capture, forge (the gate + Goodhart monitor)
+  benchmarks/   tasks.yaml per skill (dev + held-out gate splits)
+  rubrics/      judge rubrics per skill
+docs/superpowers/   specs (designs) and plans (implementation plans)
+CLAUDE.md       operating standards + the skill router
+```
