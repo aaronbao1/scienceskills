@@ -1,6 +1,24 @@
 from __future__ import annotations
 
 
+def _integrity_lines(tournament: dict) -> list[str]:
+    """Extra markdown lines for judge-integrity flags; empty when the keys are absent."""
+    if "panel_independent" not in tournament:
+        return []
+    lines = []
+    if tournament["panel_independent"]:
+        lines.append("- Judge panel independent: yes")
+    else:
+        reasons = "; ".join(tournament.get("panel_reasons", []))
+        lines.append(f"- Judge panel independent: no ({reasons})")
+    lines.append(f"- Mean panel disagreement: {tournament.get('mean_disagreement', 0.0):.2f}")
+    if tournament.get("verbosity_flags"):
+        lines.append(f"- Verbosity-flagged tasks: {', '.join(tournament['verbosity_flags'])}")
+    if tournament.get("injection_flags"):
+        lines.append(f"- Judge-injection flagged tasks: {', '.join(tournament['injection_flags'])}")
+    return lines
+
+
 def render_promotion_proposal(
     skill: str,
     incumbent_overall: float,
@@ -26,6 +44,9 @@ def render_promotion_proposal(
             f"ties {tournament['ties']} "
             f"(candidate win rate {tournament['candidate_win_rate']:.2f})"
         ),
+    ]
+    lines += _integrity_lines(tournament)
+    lines += [
         "",
         "## Per-task",
         "| task | incumbent | candidate | critical |",
@@ -70,6 +91,9 @@ def render_stat_proposal(
             f"ties {tournament['ties']} "
             f"(candidate win rate {tournament['candidate_win_rate']:.2f})"
         ),
+    ]
+    lines += _integrity_lines(tournament)
+    lines += [
         "",
         "## Per held-out task (seed-averaged)",
         "| task | incumbent | candidate | critical |",

@@ -10,7 +10,15 @@ from eval.harness.blend import overall_score
 from eval.harness.forge_report import render_promotion_proposal, render_stat_proposal
 from eval.harness.gate import decide_promotion, decide_promotion_stat
 from eval.harness.stats import significant_improvement
-from eval.harness.tournament import tally_tournament
+from eval.harness.tournament import (
+    tally_tournament,
+    resolve_swapped,
+    aggregate_panel,
+    panel_disagreement,
+    check_panel_independence,
+    verbosity_flag,
+)
+from eval.harness.judge_safety import detect_injection
 
 
 def content_hash(text: str) -> str:
@@ -66,12 +74,44 @@ def aggregate_per_task(inc_runs: list, cand_runs: list, split: str = "gate") -> 
     return per_task
 
 
+def summarize_tournament(tournament) -> dict:
+    """Flat list -> legacy tally; robust dict -> bias-controlled tally + integrity flags."""
+    if not isinstance(tournament, dict):
+        return tally_tournament(tournament or [])
+    comparisons = tournament.get("comparisons", [])
+    panel = tournament.get("panel", {})
+    task_verdicts = []
+    disagreements = []
+    verbosity = []
+    injections = []
+    for comp in comparisons:
+        tid = comp["task_id"]
+        resolved = [resolve_swapped(v["first"], v["second"]) for v in comp.get("votes", [])]
+        winner = aggregate_panel(resolved) if resolved else "tie"
+        task_verdicts.append({"task_id": tid, "winner": winner})
+        if resolved:
+            disagreements.append(panel_disagreement(resolved))
+        if verbosity_flag(winner, comp.get("incumbent_chars", 0), comp.get("candidate_chars", 0)):
+            verbosity.append(tid)
+        text = comp.get("candidate_text")
+        if text and detect_injection(text):
+            injections.append(tid)
+    summary = tally_tournament(task_verdicts)
+    independence = check_panel_independence(panel.get("judge_families", []), panel.get("agent_family"))
+    summary["panel_independent"] = independence["independent"]
+    summary["panel_reasons"] = independence["reasons"]
+    summary["mean_disagreement"] = sum(disagreements) / len(disagreements) if disagreements else 0.0
+    summary["verbosity_flags"] = verbosity
+    summary["injection_flags"] = injections
+    return summary
+
+
 def evaluate(results: dict) -> tuple:
     """Statistical held-out gate when 'runs' are present; else the legacy margin gate."""
     skill = results["skill"]
     inc = results["incumbent"]
     cand = results["candidate"]
-    tournament = tally_tournament(results.get("tournament", []))
+    tournament = summarize_tournament(results.get("tournament", []))
 
     if "runs" in inc and "runs" in cand:
         alpha = results.get("alpha", 0.05)
@@ -124,7 +164,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     try:
         decision, report = evaluate(results)
-    except (KeyError, ValueError, TypeError) as exc:
+    except (KeyError, ValueError, TypeError, AttributeError) as exc:
         print(f"error: malformed results: {exc}", file=sys.stderr)
         return 2
     print(report)
