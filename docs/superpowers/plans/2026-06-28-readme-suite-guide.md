@@ -1,3 +1,52 @@
+# README Suite Guide Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Expand the minimal `README.md` into the single front-door guide for the scienceskills suite — covering how skills activate, a capability reference for all 11 skills, end-to-end composition workflows, a skill-forge deep dive, the eval-harness commands, and a reference-file map — written for both the operator (the repo owner) and researchers adopting the plugin.
+
+**Architecture:** A single file, `README.md`, is fully rewritten. It is assembled section by section (one task per coherent section group), each section committed independently. There is no application code; "tests" are (1) factual-accuracy audits that every skill name and file path the README mentions actually exists, and (2) the repo's existing gates — `python3 -m eval.harness.cli lint`, `python3 -m eval.harness.cli validate`, and `pytest` — staying green so the doc change breaks nothing.
+
+**Tech Stack:** Markdown. Verification via the project's Python eval harness (`eval/harness/cli.py`, `capture.py`, `forge.py`) and `pytest`.
+
+## Global Constraints
+
+- The deliverable is exactly one file: `README.md` at the repo root. Do not create new doc files; do not move the existing specs/plans.
+- Every skill name written in the README MUST be one of the 11 real skill directories: `argumentation-and-sources`, `deep-reasoning`, `deep-reasoning-ultra`, `faithful-implementation`, `humanities-inquiry`, `literature-review`, `research-design`, `research-synthesis`, `rigorous-validation`, `scientific-rigor`, `skill-forge`.
+- Every command written in the README MUST match the real harness surface, verbatim:
+  - `python3 -m eval.harness.cli lint`
+  - `python3 -m eval.harness.cli validate`
+  - `python3 -m eval.harness.capture snapshot <skill>`
+  - `python3 -m eval.harness.capture insight <skill>`
+  - `python3 -m eval.harness.forge <skill> results.json`
+- Capability blurbs MUST stay faithful to each skill's own `description:` frontmatter (paraphrase in spirit; do not invent capabilities a skill does not claim).
+- Preserve the existing dev-setup content (venv / `pip install -e ".[dev]"` / `pytest`) and the lint/validate commands already in `README.md`.
+- Keep the existing pointer to the design spec `docs/superpowers/specs/2026-06-27-scienceskills-design.md` and to `CLAUDE.md`.
+- Cross-references inside the README use relative links that resolve from the repo root (e.g. `skills/scientific-rigor/SKILL.md`, `CLAUDE.md`).
+
+---
+
+## File Structure
+
+- **Modify (full rewrite):** `README.md` — the only file changed. Responsibility: be the complete operator + adopter guide to the suite.
+
+All tasks modify this one file by appending the next section. Order matters: the file reads top-to-bottom in the order tasks are executed.
+
+---
+
+### Task 1: Top of doc — intro, "how skills activate", and the lifecycle map
+
+**Files:**
+- Modify: `README.md` (replace entire file with the content below; later tasks append after the `<!-- §map end -->` marker)
+
+**Interfaces:**
+- Consumes: nothing.
+- Produces: the document header through the lifecycle-map section. Later tasks append below the marker comment `<!-- §map end -->` and rely on the section headings established here (`## Skills` will be added in Task 2, etc.).
+
+- [ ] **Step 1: Write the section content**
+
+Replace the full contents of `README.md` with:
+
+````markdown
 # scienceskills
 
 A self-improving Claude Code skill suite for **rigorous scientific research** — framing
@@ -39,6 +88,47 @@ skill, each a `SKILL.md` with a `name` and a `description`. You don't memorize t
 
 Always-on underneath all of it: `scientific-rigor` (standards + routing).
 
+<!-- §map end -->
+````
+
+- [ ] **Step 2: Verify named skills exist**
+
+Run:
+```bash
+cd /Users/aaronbao/Developer/scienceskills && for s in research-design humanities-inquiry literature-review argumentation-and-sources faithful-implementation rigorous-validation research-synthesis deep-reasoning deep-reasoning-ultra skill-forge scientific-rigor; do test -d "skills/$s" || echo "MISSING: $s"; done; echo "skill-name audit done"
+```
+Expected: prints only `skill-name audit done` (no `MISSING:` lines).
+
+- [ ] **Step 3: Verify the doc-link targets exist**
+
+Run:
+```bash
+cd /Users/aaronbao/Developer/scienceskills && for f in CLAUDE.md skills docs/superpowers/specs/2026-06-27-scienceskills-design.md; do test -e "$f" || echo "MISSING LINK: $f"; done; echo "link audit done"
+```
+Expected: prints only `link audit done`.
+
+- [ ] **Step 4: Commit**
+
+```bash
+cd /Users/aaronbao/Developer/scienceskills && git add README.md && git commit -m "docs(readme): intro, activation model, lifecycle map"
+```
+
+---
+
+### Task 2: Skill reference — all 11 skills, grouped by role
+
+**Files:**
+- Modify: `README.md` (append after `<!-- §map end -->`)
+
+**Interfaces:**
+- Consumes: the headings/structure from Task 1.
+- Produces: the `## Skills` section. Each entry follows the fixed shape **what · when · composes with**, faithful to the skill's `description:`.
+
+- [ ] **Step 1: Append the section content**
+
+Append to `README.md`:
+
+````markdown
 ## Skills
 
 Each entry is **what it does · when to reach for it · what it composes with**. The blurbs
@@ -119,7 +209,46 @@ insights each skill captured from its own sessions, distills them into a playboo
 proposes human-approved, gated edits to a skill. *Reach for it:* improving the suite itself.
 *Composes with:* the eval harness (`capture` / `forge`), `writing-skills`,
 `using-git-worktrees`, and the Workflow tool. Full how-to below.
+````
 
+- [ ] **Step 2: Verify every `SKILL.md` link target exists**
+
+Run:
+```bash
+cd /Users/aaronbao/Developer/scienceskills && grep -oE 'skills/[a-z-]+/SKILL\.md' README.md | sort -u | while read -r f; do test -e "$f" || echo "MISSING: $f"; done; echo "skill-link audit done"
+```
+Expected: prints only `skill-link audit done`.
+
+- [ ] **Step 3: Confirm all 11 skills are documented**
+
+Run:
+```bash
+cd /Users/aaronbao/Developer/scienceskills && echo "documented: $(grep -oE 'skills/[a-z-]+/SKILL\.md' README.md | sort -u | wc -l | tr -d ' ') of 11"
+```
+Expected: `documented: 11 of 11`.
+
+- [ ] **Step 4: Commit**
+
+```bash
+cd /Users/aaronbao/Developer/scienceskills && git add README.md && git commit -m "docs(readme): per-skill capability reference"
+```
+
+---
+
+### Task 3: Composition workflows — end-to-end walkthroughs
+
+**Files:**
+- Modify: `README.md` (append)
+
+**Interfaces:**
+- Consumes: the skill names established in Task 2.
+- Produces: the `## Workflows` section; downstream tasks do not depend on it.
+
+- [ ] **Step 1: Append the section content**
+
+Append to `README.md`:
+
+````markdown
 ## Workflows — operating the full suite
 
 Skills chain. `scientific-rigor` sits underneath every workflow, enforcing the standards and
@@ -158,7 +287,38 @@ routing between phases. Three common arcs:
   accordingly (decompose, run parallel paths, verify independently, search).
 - Escalate to **`deep-reasoning-ultra`** when the stakes demand an *auditable* decision: it
   aggregates the parallel paths into a calibrated confidence with an explicit escalate/stop.
+````
 
+- [ ] **Step 2: Verify no stray skill names slipped in**
+
+Run:
+```bash
+cd /Users/aaronbao/Developer/scienceskills && grep -oE '`[a-z][a-z-]+`' README.md | tr -d '`' | sort -u | grep -E '^(research-design|humanities-inquiry|literature-review|argumentation-and-sources|faithful-implementation|rigorous-validation|research-synthesis|deep-reasoning|deep-reasoning-ultra|skill-forge|scientific-rigor)$' | wc -l | xargs echo "in-suite skill mentions:"; echo "(sanity check — non-zero, no error)"
+```
+Expected: a non-zero count and no error. (This is a sanity check that the suite skills are referenced; external skills like `writing-plans` are expected too and are fine.)
+
+- [ ] **Step 3: Commit**
+
+```bash
+cd /Users/aaronbao/Developer/scienceskills && git add README.md && git commit -m "docs(readme): end-to-end composition workflows"
+```
+
+---
+
+### Task 4: skill-forge deep dive
+
+**Files:**
+- Modify: `README.md` (append)
+
+**Interfaces:**
+- Consumes: nothing new.
+- Produces: the `## skill-forge` section. Commands here MUST match the Global Constraints command list. Source of truth: [`skills/skill-forge/SKILL.md`](skills/skill-forge/SKILL.md).
+
+- [ ] **Step 1: Append the section content**
+
+Append to `README.md`:
+
+````markdown
 ## skill-forge — the self-improvement engine
 
 `skill-forge` evolves the suite **one skill at a time** and never promotes a durable change
@@ -218,7 +378,46 @@ always keep deterministic ground-truth tasks as the non-judge tripwire.
 on the dev split, a sub-noise margin, or a single seed; a single judge or a single A/B order;
 editing the benchmark to make a candidate pass; crystallizing while the monitor shows
 proxy↑/gold↓; committing project-specific content into the store; leaving no git rollback path.
+````
 
+- [ ] **Step 2: Verify the forge commands and store paths are real**
+
+Run:
+```bash
+cd /Users/aaronbao/Developer/scienceskills && python3 -c "import eval.harness.capture, eval.harness.forge" && echo "modules import OK" && grep -q "snapshot" eval/harness/capture.py && grep -q "insight" eval/harness/capture.py && echo "capture subcommands OK"
+```
+Expected: `modules import OK` then `capture subcommands OK`.
+
+- [ ] **Step 3: Verify the documented commands match the harness exactly**
+
+Run:
+```bash
+cd /Users/aaronbao/Developer/scienceskills && grep -nE 'python3 -m eval\.harness\.(capture (snapshot|insight)|forge) ' README.md && echo "command-string audit done"
+```
+Expected: lines for `capture snapshot`, `capture insight`, and `forge`, then `command-string audit done`.
+
+- [ ] **Step 4: Commit**
+
+```bash
+cd /Users/aaronbao/Developer/scienceskills && git add README.md && git commit -m "docs(readme): skill-forge deep dive (loop, store, gate)"
+```
+
+---
+
+### Task 5: Eval harness — commands and benchmark schema
+
+**Files:**
+- Modify: `README.md` (append)
+
+**Interfaces:**
+- Consumes: nothing new.
+- Produces: the `## Eval harness` section. Source of truth: `eval/harness/cli.py` (lint/validate), `eval/benchmarks/*/tasks.yaml` (schema), `eval/harness/forge.py` (gate).
+
+- [ ] **Step 1: Append the section content**
+
+Append to `README.md`:
+
+````markdown
 ## Eval harness
 
 The harness in [`eval/`](eval/) lints skills, validates benchmarks, captures session
@@ -241,7 +440,38 @@ insights, and runs the promotion gate.
 **held out** — the improvement loop never mines against them, so a candidate that wins on the
 `gate` split has earned a real, un-overfit gain. The `forge` gate scores the held-out `gate`
 split only.
+````
 
+- [ ] **Step 2: Verify the lint/validate commands run and the schema fields are real**
+
+Run:
+```bash
+cd /Users/aaronbao/Developer/scienceskills && python3 -m eval.harness.cli lint && python3 -m eval.harness.cli validate && grep -rqE 'split:\s*gate' eval/benchmarks/*/tasks.yaml && grep -rqE 'kind:\s*(judge|ground_truth)' eval/benchmarks/*/tasks.yaml && test -d eval/rubrics && echo "harness + schema audit done"
+```
+Expected: lint prints `lint: OK`, validate prints `validate: OK`, then `harness + schema audit done`.
+
+- [ ] **Step 3: Commit**
+
+```bash
+cd /Users/aaronbao/Developer/scienceskills && git add README.md && git commit -m "docs(readme): eval-harness commands and benchmark schema"
+```
+
+---
+
+### Task 6: Reference-file map, dev setup, and repo layout (closing sections)
+
+**Files:**
+- Modify: `README.md` (append)
+
+**Interfaces:**
+- Consumes: nothing new.
+- Produces: the closing `## Reference files`, `## Dev setup`, and `## Repo layout` sections. This is the end of the document.
+
+- [ ] **Step 1: Append the section content**
+
+Append to `README.md`:
+
+````markdown
 ## Reference files
 
 Some skills carry deep-dive companions and per-skill learned heuristics, loaded only when
@@ -286,3 +516,85 @@ eval/
 docs/superpowers/   specs (designs) and plans (implementation plans)
 CLAUDE.md       operating standards + the skill router
 ```
+````
+
+- [ ] **Step 2: Verify the closing reference paths exist**
+
+Run:
+```bash
+cd /Users/aaronbao/Developer/scienceskills && for f in skills/scientific-rigor/reasoning-and-creativity.md skills/scientific-rigor/rigor-checklists.md docs/superpowers/specs docs/superpowers/plans eval/rubrics eval/benchmarks; do test -e "$f" || echo "MISSING: $f"; done; echo "reference-path audit done"
+```
+Expected: prints only `reference-path audit done`.
+
+- [ ] **Step 3: Commit**
+
+```bash
+cd /Users/aaronbao/Developer/scienceskills && git add README.md && git commit -m "docs(readme): reference-file map, dev setup, repo layout"
+```
+
+---
+
+### Task 7: Whole-document verification, link audit, and self-review
+
+**Files:**
+- Modify: `README.md` (fixes only, if the audit finds problems)
+
+**Interfaces:**
+- Consumes: the complete `README.md` from Tasks 1–6.
+- Produces: the final, verified README. No new sections.
+
+- [ ] **Step 1: Audit every relative link in the README resolves**
+
+Run:
+```bash
+cd /Users/aaronbao/Developer/scienceskills && grep -oE '\]\(([A-Za-z0-9._/-]+)\)' README.md | sed -E 's/^\]\(//; s/\)$//' | grep -vE '^https?:' | sort -u | while read -r f; do path="${f%%#*}"; test -e "$path" || echo "BROKEN LINK: $f"; done; echo "full link audit done"
+```
+Expected: prints only `full link audit done` (no `BROKEN LINK:` lines). If any appear, fix the link in `README.md` and re-run.
+
+- [ ] **Step 2: Confirm the repo gates are still green**
+
+Run:
+```bash
+cd /Users/aaronbao/Developer/scienceskills && python3 -m eval.harness.cli lint && python3 -m eval.harness.cli validate && pytest -q
+```
+Expected: `lint: OK`, `validate: OK`, and pytest passes (no failures). A README-only change must not break these.
+
+- [ ] **Step 3: Self-review the rendered doc**
+
+Read `README.md` top to bottom and check:
+- All 11 skills appear with a what/when/composes blurb.
+- The four scope items are present: composition workflows, skill-forge deep dive, eval-harness usage, reference-file map.
+- No placeholder text (`TBD`, `TODO`, `XXX`), no contradictory claims, no skill name outside the 11.
+- Commands match the Global Constraints list verbatim.
+
+Run a placeholder scan:
+```bash
+cd /Users/aaronbao/Developer/scienceskills && grep -nE 'TBD|TODO|FIXME|XXX|<placeholder>' README.md && echo "FOUND PLACEHOLDERS — fix them" || echo "no placeholders"
+```
+Expected: `no placeholders`.
+
+- [ ] **Step 4: Commit any fixes**
+
+If Steps 1–3 required edits:
+```bash
+cd /Users/aaronbao/Developer/scienceskills && git add README.md && git commit -m "docs(readme): fix links/accuracy from final audit"
+```
+If no fixes were needed, skip the commit.
+
+---
+
+## Self-Review (plan author)
+
+**Spec coverage** — the four user-approved scope items map to tasks:
+- Per-skill capability reference → Task 2 (all 11) ✓
+- Composition workflows → Task 3 ✓
+- skill-forge deep dive → Task 4 ✓
+- Eval-harness usage → Task 5 ✓
+- Reference-file map → Task 6 ✓
+- Operator activation model + lifecycle map (the "how to operate the full suite" framing) → Task 1 ✓
+- Audience = operator + adopter → handled by the what/when/composes shape and plain-English blurbs throughout ✓
+- Location = expand `README.md` itself → every task modifies only `README.md` ✓
+
+**Placeholder scan** — no `TBD`/`TODO`/"add error handling" steps; all content is literal markdown; Task 7 enforces a placeholder grep.
+
+**Consistency** — the five harness commands are identical in Global Constraints, Task 4, and Task 5; the 11 skill names are identical in Global Constraints, Task 1, and Task 2. Verification steps grep the real files (`eval/harness/*.py`, `eval/benchmarks/*/tasks.yaml`) rather than asserting from memory.
