@@ -6,3 +6,4 @@ eval/reports/
 *.egg-info/
 dist/
 .DS_Store
+skills/skill-forge/insights/*/transcripts/
