@@ -158,3 +158,63 @@ routing between phases. Three common arcs:
   accordingly (decompose, run parallel paths, verify independently, search).
 - Escalate to **`deep-reasoning-ultra`** when the stakes demand an *auditable* decision: it
   aggregates the parallel paths into a calibrated confidence with an explicit escalate/stop.
+
+## skill-forge — the self-improvement engine
+
+`skill-forge` evolves the suite **one skill at a time** and never promotes a durable change
+without measured evidence on a held-out benchmark *and* your approval. It is self-contained:
+every target skill captures its own session insights into a central store, and `skill-forge`
+turns those logs into improvements.
+
+**Two layers of improvement:**
+
+- **Playbook** — fast, reversible, no gate. Distilled heuristics a skill consults at use-time.
+- **`SKILL.md`** — slow, gated, rare. Durable edits, promoted only through the held-out gate
+  plus your approval.
+
+**The insight store** (`skills/skill-forge/insights/<skill>/`):
+
+```
+transcripts/<session-id>.jsonl   raw session snapshots (gitignored cache)
+raw.jsonl                        per-session insight records (committed)
+playbook.md                      curated heuristics, bounded, vote tags (committed)
+gate-history.jsonl               one line per gate round (committed)
+```
+
+**The loop:**
+
+1. **Capture** (run inside each skill, at session end). Snapshot the transcript and append
+   one *generalized* insight — behavioral signals only (correction/redo, abandonment,
+   approval, hard failure, self-assessed struggle), no judge:
+   ```bash
+   python3 -m eval.harness.capture snapshot <skill>
+   # then pipe a JSON insight record to:
+   python3 -m eval.harness.capture insight <skill>
+   ```
+2. **Distill.** Read recent `raw.jsonl`, contrast failures vs successes, and curate
+   `playbook.md` with ADD / EDIT / UPVOTE / DOWNVOTE. Keep it bounded (default ≤25 entries;
+   prune lowest net-vote). Heuristics must generalize — no project-specifics.
+3. **Crystallize.** When a heuristic has earned its keep (net votes ≥4, recurs across ≥3
+   sessions), express it as an attributed line edit `{old, new, reason}` against the target
+   `SKILL.md`, in 1–2 candidates in isolated worktrees (`using-git-worktrees`).
+4. **Gate.** Run incumbent vs candidate on the **held-out `gate` split only**, paired on the
+   same tasks with **K ≥ 3 independent seeds per task**, then:
+   ```bash
+   python3 -m eval.harness.forge <skill> results.json
+   ```
+   It runs the Goodhart monitor and promotes only when there is no critical-task regression,
+   the candidate wins gold on every seed, and the mean gain exceeds the incumbent's
+   seed-to-seed noise. **Exit 0** = promote-pending-approval · **1** = reject · **2** = halt.
+5. **Promote.** On pass **and your approval**: replace the `SKILL.md`, retire the heuristic
+   from the playbook (mark it `crystallized`), and `git tag` the new version so the prior one
+   is one `git checkout` away.
+
+**Judging (when a task is judge-scored):** use a panel of ≥3 judges from disjoint model
+families, none from the candidate-generator's family; compare both A/B orders and count a win
+only if it wins both; sanitize candidate-controlled text before it enters the judge template;
+always keep deterministic ground-truth tasks as the non-judge tripwire.
+
+**Red flags — stop:** promoting without approval or without a measured held-out gain; gating
+on the dev split, a sub-noise margin, or a single seed; a single judge or a single A/B order;
+editing the benchmark to make a candidate pass; crystallizing while the monitor shows
+proxy↑/gold↓; committing project-specific content into the store; leaving no git rollback path.
