@@ -119,3 +119,42 @@ insights each skill captured from its own sessions, distills them into a playboo
 proposes human-approved, gated edits to a skill. *Reach for it:* improving the suite itself.
 *Composes with:* the eval harness (`capture` / `forge`), `writing-skills`,
 `using-git-worktrees`, and the Workflow tool. Full how-to below.
+
+## Workflows — operating the full suite
+
+Skills chain. `scientific-rigor` sits underneath every workflow, enforcing the standards and
+routing between phases. Three common arcs:
+
+### A. An empirical study (design → ship → believe → tell)
+
+1. **`research-design`** — sharpen the question; state a hypothesis with a prediction that
+   could fail; pre-register the primary metric and the ablations *before looking at data*.
+2. **`literature-review`** — survey methods, pick one with justification, and extract the
+   oracles the implementation must satisfy.
+3. **`faithful-implementation`** — build it via `writing-plans` →
+   `subagent-driven-development` → `test-driven-development`; the oracles from step 2 become
+   the tests that prove fidelity to the source.
+4. **`rigorous-validation`** — reproducibility, baselines, robustness across seeds and splits,
+   a leakage/bias check, and a red-team of your own result (with `data:statistical-analysis`
+   and `/code-review`).
+5. **`research-synthesis`** — write it up with claims calibrated to the evidence and explicit
+   limitations; figures via `data:create-viz`; deliverable via `docx`/`pptx`.
+6. **At session end** — capture insights so `skill-forge` can learn (see the eval-harness
+   section).
+
+### B. An interpretive / humanities project
+
+1. **`humanities-inquiry`** — frame the inquiry; fix the reading lens and any coding scheme in
+   advance; close-read.
+2. **`argumentation-and-sources`** — appraise primary and secondary sources, construct and
+   stress-test the argument, map the scholarly debate, and catch fallacies and unsupported
+   leaps.
+3. **`research-synthesis`** — write the defensible interpretation with calibrated confidence
+   and acknowledged counter-readings.
+
+### C. One genuinely hard problem
+
+- **`deep-reasoning`** for a hard one-off — it triages difficulty and spends effort
+  accordingly (decompose, run parallel paths, verify independently, search).
+- Escalate to **`deep-reasoning-ultra`** when the stakes demand an *auditable* decision: it
+  aggregates the parallel paths into a calibrated confidence with an explicit escalate/stop.
