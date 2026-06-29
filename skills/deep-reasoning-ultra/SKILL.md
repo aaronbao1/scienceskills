@@ -44,3 +44,21 @@ and 3 aggregate:
 - Running one reasoning path and calling it consensus — aggregation needs several independent paths.
 - Letting the same chain both answer and verify.
 - Skipping the escalation the `escalate` signal calls for because the first answer "looks right".
+
+## Consult
+
+Before starting, read your playbook of learned heuristics:
+`skills/skill-forge/insights/deep-reasoning-ultra/playbook.md` (skip if absent).
+
+## Capture (run at session end)
+
+When you finish a task that used this skill, record what happened so skill-forge can learn:
+
+1. Snapshot this session: `python3 -m eval.harness.capture snapshot deep-reasoning-ultra`
+2. Reflect against the five signals — user correction/redo · abandonment · approval · hard failure
+   (tool/hook errors) · self-assessed struggle — then append ONE **generalized** insight (no
+   project-specifics): pipe a JSON record to `python3 -m eval.harness.capture insight deep-reasoning-ultra` with
+   fields `{ts, session_id, context, signals, what_worked, what_failed, lesson, proposed_edit?, confidence}`.
+
+Record the *lesson*, not the incident. If a specific line of this SKILL.md caused a failure, include a
+`proposed_edit` of `{old, new, reason}`.

@@ -43,3 +43,21 @@ comparison with the decision, and the extracted oracles.
 - A method chosen by popularity or recency rather than fit and evidence.
 - Citing a claim without recording the evidence behind it.
 - No gap analysis — a review that only summarizes cannot justify new work.
+
+## Consult
+
+Before starting, read your playbook of learned heuristics:
+`skills/skill-forge/insights/literature-review/playbook.md` (skip if absent).
+
+## Capture (run at session end)
+
+When you finish a task that used this skill, record what happened so skill-forge can learn:
+
+1. Snapshot this session: `python3 -m eval.harness.capture snapshot literature-review`
+2. Reflect against the five signals — user correction/redo · abandonment · approval · hard failure
+   (tool/hook errors) · self-assessed struggle — then append ONE **generalized** insight (no
+   project-specifics): pipe a JSON record to `python3 -m eval.harness.capture insight literature-review` with
+   fields `{ts, session_id, context, signals, what_worked, what_failed, lesson, proposed_edit?, confidence}`.
+
+Record the *lesson*, not the incident. If a specific line of this SKILL.md caused a failure, include a
+`proposed_edit` of `{old, new, reason}`.
