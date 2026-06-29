@@ -2,10 +2,10 @@
 
 Score a forge run on each dimension, 0–4.
 
-- **Evidence quality (weight 0.25):** Weaknesses and gains are concrete and backed by eval results, not impressions.
+- **Evidence quality (weight 0.25):** Weaknesses and gains are concrete and backed by eval results; candidates are grounded in failed traces via reflective, attributed line edits — not impressions or freeform rewrites.
 - **Evaluation rigor (weight 0.25):** Held-out gate split kept disjoint from mine/generate; an order-swapped A/B tournament and a disjoint-family judge panel (with candidate text sanitized before judging); variance estimated across seeds — not a single point score.
 - **Gating soundness (weight 0.25):** Promotion requires statistical significance (paired bootstrap CI above zero and a Bonferroni-corrected permutation p) and blocks on any critical regression, with human approval.
-- **Honesty (weight 0.15):** Regressions and judge disagreement are reported, not hidden.
+- **Honesty (weight 0.15):** Regressions and judge disagreement are reported, not hidden; the loop halts on proxy/gold over-optimization rather than chasing a Goodharted judge score.
 - **Reversibility (weight 0.10):** The prior version stays recoverable (git tag) after promotion.
 
 Blended score = Σ(weight × dimension / 4). A run that promotes without human approval scores

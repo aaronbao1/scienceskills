@@ -16,9 +16,15 @@ agents.
 1. **Mine.** Gather concrete weaknesses and new best-practices for the target skill from
    its eval history, recent session transcripts, and `deep-research`. Turn them into a short
    list of specific, testable improvements.
-2. **Generate candidates.** Use `writing-skills` (or `skill-creator`) to draft two or three
-   variant versions of the SKILL.md, each addressing the weaknesses differently. Create each
-   in an isolated worktree via `using-git-worktrees` so runs never collide.
+2. **Generate candidates (reflective mutation).** Do not draft from scratch. Feed the proposer
+   the FAILED transcripts/traces from the mine step plus the rubric and judge feedback, and use
+   `writing-skills` to express each fix as a structured line edit that attributes a specific
+   failure to a specific line of the SKILL.md — `{old, new, reason}`. Apply the edits
+   deterministically with `eval.harness.mutation` (a candidate cannot blindly rewrite the whole
+   document or target an ambiguous line). Produce two or three such candidates in isolated
+   worktrees via `using-git-worktrees`, and carry them on an instance-wise Pareto frontier
+   (`eval.harness.pareto`) rather than always keeping the best-on-aggregate — aggregate-best
+   selection collapses to a local optimum after one round.
 3. **Run on the benchmark slice.** For the skill's `eval/benchmarks/<skill>/tasks.yaml`,
    dispatch one agent per (version, task) that adopts that version's SKILL.md and performs
    the task. Score each task in the range 0 to 1:
@@ -46,6 +52,22 @@ agents.
    with no critical-task regression. Present the proposal and the evidence to your human
    partner. Promote only on approval — then replace the SKILL.md and `git tag` the new
    version so the prior one is always one `git checkout` away.
+
+## Loop control (across rounds)
+
+The single-skill cycle runs many times; these guards keep it honest over rounds and are gated by
+`python3 -m eval.harness.loop_control <history.json>`:
+
+- **Accumulate the eval anchor.** Keep a permanent seed of human/ground-truth tasks in the
+  benchmark every round; never replace it with self-generated transcripts. `eval.harness.anchor`
+  flags a dropped seed.
+- **Halt on over-optimization.** Track the judge/dev (proxy) score and the deterministic
+  ground-truth (gold) score each round. When the proxy rises while gold stalls or drops, HALT —
+  the loop is Goodharting the judge. Cap consecutive judge-only promotions. Edit-distance or KL
+  penalties alone do not fix this, so the halt watches the proxy/gold divergence directly.
+- **Refresh on a statistical trigger.** When the dev-set and held-out gate performance diverge
+  significantly (`eval.harness.anchor` reuses the gate's paired significance test), regenerate
+  fresh ground-truth tasks and bound the rounds run against any fixed set.
 
 ## Results JSON shape
 
