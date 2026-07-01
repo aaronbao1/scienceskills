@@ -61,6 +61,35 @@ Once installed, the skills activate automatically on matching work, or you can i
 name (e.g. `scientific-rigor`, `research-design`) — see below. To build or test the suite
 itself, see [Dev setup](#dev-setup).
 
+## Install into Codex CLI
+
+Codex has no plugin marketplace — it discovers skills as subdirectories (each with a
+`SKILL.md`) under an `.agents/skills/` directory, the cross-runtime location it shares with
+Copilot CLI and Gemini CLI. Link this repo's skills into your user-level `~/.agents/skills/`:
+
+```bash
+git clone https://github.com/aaronbao1/scienceskills.git
+mkdir -p ~/.agents/skills
+for d in "$(pwd)"/scienceskills/skills/*/; do
+  ln -sfn "$d" ~/.agents/skills/"$(basename "$d")"
+done
+```
+
+Symlinks keep the skills live — edits in the clone appear in Codex after a restart. Prefer
+copies? Use `cp -R "$d" ~/.agents/skills/` as the loop body instead.
+
+Codex loads skills on session start and detects changes automatically; if one doesn't
+appear, restart Codex. To disable a skill without deleting it, add a `[[skills.config]]`
+entry to `~/.codex/config.toml` with its `path` and `enabled = false`.
+
+**Project-scoped instead of global?** Place the skills under a repo's own `.agents/skills/`
+(committed, shared with your team) rather than `~/.agents/skills/` — both are valid
+discovery roots (Codex also scans `.agents/skills/` from the repo root down to your working
+directory).
+
+> Note: `skill-forge`'s capture/eval commands (`python3 -m eval.harness.*`) run from a clone
+> of this repo, so keep the clone around if you plan to use the self-improvement loop.
+
 ## How the skills activate
 
 The suite is a Claude Code plugin. Skills live in [`skills/`](skills/), one folder per
